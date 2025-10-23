@@ -1,8 +1,18 @@
+# Ignore specific files and folders
 .vscode
 .DS_Store
-Packages
-Temp
-Logs
-Library
+Packages/
+Temp/
+Logs/
+Library/
 *.sln
 *.csproj
+
+# Do not ignore material-related files
+!Assets/**/*.mat
+!Assets/**/*.fbx
+!Assets/**/*.png
+!Assets/**/*.jpg
+!Assets/**/*.tga
+!Assets/**/*.prefab
+!Assets/**/*.meta
