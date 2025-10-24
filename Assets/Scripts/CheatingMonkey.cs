@@ -152,13 +152,13 @@ public class MonkeyBSGame : MonoBehaviour
 
             if (Physics.Raycast(ray, out hit))
             {
-                Monkey clickedMonkey = monkeys.Find(m => m.monkeyObject == hit.collider.gameObject);
+                int clickedMonkeyIndex = monkeys.FindIndex(m => m.monkeyObject == hit.collider.gameObject);
                 
-                if (clickedMonkey != null)
+                if (monkeys[clickedMonkeyIndex] != null)
                 {
-                    if (clickedMonkey.isLookingAway)
+                    if (monkeys[clickedMonkeyIndex].isLookingAway)
                     {
-                        StartPeeking(clickedMonkey);
+                        StartPeeking(clickedMonkeyIndex);
                     }
                     else
                     {
@@ -177,17 +177,18 @@ public class MonkeyBSGame : MonoBehaviour
         }
     }
 
-    void StartPeeking(Monkey monkey)
+    void StartPeeking(int monkeyIndex)
     {
         isPeeking = true;
-        currentlyPeekingAt = monkey;
+        currentlyPeekingAt = monkeys[monkeyIndex];
 
         if (cardDisplayUI != null)
         {
             cardDisplayUI.SetActive(true);
         }
 
-        Debug.Log($"Peeking at monkey with cards: {string.Join(", ", monkey.cards)}");
+        TurnIndicator.instance.RevealCard(monkeyIndex);
+        Debug.Log($"Peeking at monkey with cards: {string.Join(", ", BSInterface.instance.GetMonkeyHand(monkeyIndex))}");
     }
 
     void StopPeeking()
@@ -196,6 +197,8 @@ public class MonkeyBSGame : MonoBehaviour
         {
             score += 5;
             Debug.Log($"Successfully peeked! +5 points. Total Score: {score} | Strikes: {strikes}/{maxStrikes}");
+            // it's hacky to put stuff in here but i'm just gonna thug it out yk
+
         }
 
         isPeeking = false;

@@ -1,10 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 public class BSInterface : MonoBehaviour
 {
-    [Header("Game Manager Reference")]
-    public GameManager gameManager;
+    // moved the assignment to start
+    [HideInInspector] public GameManager gameManager;
     
     [Header("UI Events")]
     public System.Action<string> OnMessageReceived;
@@ -12,66 +13,56 @@ public class BSInterface : MonoBehaviour
     public System.Action<string> OnTurnChanged;
     public System.Action OnGameEnded;
 
+    public static BSInterface instance;
+
+    void Awake()
+    {
+        if (instance != null && instance != this) Destroy(gameObject);
+        instance = this;
+    }
+
     void Start()
     {
-        if (gameManager == null)
-            gameManager = FindFirstObjectByType<GameManager>();
+        gameManager = GameManager.instance;
+        Assert.IsNotNull(gameManager, "game manager not set in bsinterface");
         
-        if (gameManager != null)
-        {
-            // Subscribe to game events
-            gameManager.OnGameMessage += HandleGameMessage;
-            gameManager.OnPlayerHandUpdated += HandleHandUpdated;
-            gameManager.OnPlayerTurnChanged += HandleTurnChanged;
-            gameManager.OnGameEnded += HandleGameEnded;
-        }
+        gameManager.OnGameMessage += HandleGameMessage;
+        gameManager.OnPlayerHandUpdated += HandleHandUpdated;
+        gameManager.OnPlayerTurnChanged += HandleTurnChanged;
+        gameManager.OnGameEnded += HandleGameEnded;
+    
     }
 
     void OnDestroy()
     {
-        if (gameManager != null)
-        {
             // Unsubscribe from events
             gameManager.OnGameMessage -= HandleGameMessage;
             gameManager.OnPlayerHandUpdated -= HandleHandUpdated;
             gameManager.OnPlayerTurnChanged -= HandleTurnChanged;
             gameManager.OnGameEnded -= HandleGameEnded;
-        }
     }
 
     // Public interface methods for UI to call
     public void PlayCards(List<Card> cards, CardRank claimedRank)
     {
-        if (gameManager != null)
-        {
             gameManager.PlayCards(cards, claimedRank);
-        }
     }
 
     public void CallBS()
     {
-        if (gameManager != null)
-        {
             gameManager.CallBS();
-        }
     }
 
     public void ContinueWithoutBS()
     {
-        if (gameManager != null)
-        {
             gameManager.ContinueWithoutBS();
-        }
     }
 
 
 
     public void StartNewGame()
     {
-        if (gameManager != null)
-        {
             gameManager.InitializeGame();
-        }
     }
 
     // Getter methods for UI
@@ -154,7 +145,7 @@ public class BSInterface : MonoBehaviour
         List<Card> hand = GetPlayerHand();
         if (hand.Count == 0)
             return "No cards";
-        
+
         string handString = "";
         for (int i = 0; i < hand.Count; i++)
         {
@@ -163,5 +154,30 @@ public class BSInterface : MonoBehaviour
                 handString += ", ";
         }
         return handString;
+    }
+
+    public int GetCurrentPlayerID()
+    {
+        // player is index 0
+        return gameManager.currentPlayerIndex;
+    }
+
+    public int GetNumPlayers()
+    {
+        return gameManager.players.Count;
+    }
+
+    public List<Card> GetMonkeyHand(int monkeyId)
+    {
+        // id 0 is the player
+        int playerId = monkeyId + 1;
+        if(playerId >= gameManager.players.Count || playerId <= 0)
+        {
+            Debug.Log("trying to get hand of invalid monkey id or monkey that is not the game");
+            return new List<Card>();
+        } else
+        {
+            return gameManager.players[playerId].hand;
+        }
     }
 }

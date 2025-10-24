@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 public class Player
 {
@@ -82,9 +83,23 @@ public class GameManager : MonoBehaviour
     public System.Action<int> OnPlayerTurnChanged;
     public System.Action OnGameEnded;
 
+    public static GameManager instance;
+
+    void Awake()
+    {
+        if (instance != null && instance != this)
+        {
+            Debug.LogError("extra gamemanger in " + gameObject.name + ", destroying it");
+            Destroy(gameObject);
+        }
+        instance = this;
+    }
+
     void Start()
     {
+        currentPlayerIndex = 0;
         InitializeGame();
+        Assertions();
     }
 
     public void InitializeGame()
@@ -93,27 +108,32 @@ public class GameManager : MonoBehaviour
         deck = CardUtils.CreateDeck();
         CardUtils.ShuffleDeck(deck);
         discardPile = new List<Card>();
-        
+
         // Create human player
         players.Add(new Player("You", true));
-        
+
         // Create AI players
         for (int i = 1; i <= numberOfAIPlayers; i++)
         {
             players.Add(new Player($"AI Player {i}", false));
         }
-        
+
         // Deal cards
         DealCards();
-        
+
         currentPlayerIndex = 0;
         currentClaim = CardRank.Ace;
         cardsToPlay = 1;
         gameInProgress = true;
         waitingForPlayerAction = false;
-        
+
         OnGameMessage?.Invoke($"Game started! {players.Count} players. It's {players[currentPlayerIndex].name}'s turn.");
         OnPlayerHandUpdated?.Invoke(players[0].hand); // Update human player's hand
+    }
+    
+    void Assertions()
+    {
+        Assert.AreEqual(numberOfAIPlayers + 1, players.Count, "ai players + 1 and size of players count variable do not match");
     }
 
     void DealCards()
@@ -391,7 +411,7 @@ public class GameManager : MonoBehaviour
     // Utility methods for UI
     public List<Card> GetPlayerHand()
     {
-        return players[0].hand;
+        return players[0] == null ? null : players[0].hand;
     }
 
     public string GetCurrentClaim()
