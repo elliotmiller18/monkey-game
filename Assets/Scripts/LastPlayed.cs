@@ -8,20 +8,24 @@ public class CenterCard : MonoBehaviour
     TMP_Text counterText;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
 
-    void Start()
+    void Awake()
     {
-        counterText = GetComponentInChildren<TMP_Text>();
-        counterText.enabled = false;
         img = GetComponent<Image>();
         img.enabled = false;
+        counterText = GetComponentInChildren<TMP_Text>();
+        if (counterText != null) counterText.text = "";
     }
 
     public void SwitchImage(CardRank r, int count)
     {
-        counterText.enabled = true;
-        if (count < 1) counterText.text = "";
-        else counterText.text = "X" + count;
         img.enabled = true;
+        if (counterText != null) counterText.text = "X" + count;
         img.sprite = TurnIndicator.instance.cardSprites[CardUtils.CardToIndex(r)];
+    }
+    
+    public void Reset()
+    {
+        img.enabled = false;
+        if (counterText != null) counterText.text = "";
     }
 }

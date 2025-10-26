@@ -15,6 +15,7 @@ public class BSGameLogic : MonoBehaviour
     [SerializeField] AudioClip clip;
     [SerializeField] CenterCard LastPlayed;
     [SerializeField] CenterCard NextUp;
+    [SerializeField] GameObject ResetGameButton;
     public const int humanPlayerIndex = 0;
     int currentPlayer;
     CardRank expectedRank = CardRank.Ace;
@@ -69,6 +70,11 @@ public class BSGameLogic : MonoBehaviour
     public void StartGame(int numPlayers)
     {
         Assert.AreEqual(state, GameState.Inactive, "Trying to start a game while one is active");
+
+        ResetGameButton.SetActive(false);
+        NextUp.SwitchImage(CardRank.Ace, 0);
+        LastPlayed.Reset();
+
         currentPlayer = humanPlayerIndex;
 
         List<Card> deck = CardUtils.CreateDeck();
@@ -95,7 +101,6 @@ public class BSGameLogic : MonoBehaviour
 
         state = GameState.WaitingForPlay;
         HandManager.instance.RenderCards(hands[humanPlayerIndex]);
-        NextUp.SwitchImage(CardRank.Ace, 0);
     }
 
     // play card and set lie flag depending on how many 
@@ -143,6 +148,7 @@ public class BSGameLogic : MonoBehaviour
         if(CheckForWin())
         {
             state = GameState.Inactive;
+            ResetGameButton.SetActive(true);
         } else
         {
             state = GameState.WaitingForPlay;
