@@ -5,7 +5,8 @@ using UnityEngine.Assertions;
 
 public class TurnIndicator : MonoBehaviour
 {
-    [SerializeField] List<Sprite> cardSprites;
+    //TODO: move this somewhere more central in the future
+    [SerializeField] public List<Sprite> cardSprites;
     [SerializeField] List<GameObject> monkeys;
     [SerializeField] float y_offset = 1;
     [SerializeField] float rps = 1;
@@ -27,19 +28,18 @@ public class TurnIndicator : MonoBehaviour
 
     void Start()
     {
-        Assert.IsNotNull(GameManager.instance);
         Assert.IsNotNull(monkeys);
         Assert.AreEqual(cardSprites.Count, 13);
     }
 
     void Update()
     {
-        if (GameManager.instance.currentPlayerIndex == 0) GetComponent<MeshRenderer>().enabled = false;
+        if (BSGameLogic.instance.GetPlayer() == 0) GetComponent<MeshRenderer>().enabled = false;
         else
         {
             if(!cardShowing) GetComponent<MeshRenderer>().enabled = true;
             // the list of monkeys is 1 less than the number of players
-            Vector3 new_pos = monkeys[GameManager.instance.currentPlayerIndex - 1].transform.position;
+            Vector3 new_pos = monkeys[BSGameLogic.instance.GetPlayer() - 1].transform.position;
             new_pos.y += y_offset;
             transform.position = new_pos;
         }
@@ -50,7 +50,7 @@ public class TurnIndicator : MonoBehaviour
     IEnumerator SpawnCard(int monkeyIndex)
     {
         cardShowing = true;
-        List<Card> hand = BSInterface.instance.GetMonkeyHand(monkeyIndex);
+        List<Card> hand = BSGameLogic.instance.GetHand(monkeyIndex + 1);
 
         if (hand.Count == 0)
         {
@@ -67,8 +67,6 @@ public class TurnIndicator : MonoBehaviour
         cardInstance.transform.position = new_pos;
         SpriteRenderer sr = cardInstance.AddComponent<SpriteRenderer>();
         sr.sprite = cardSprite;
-        // Optionally, set sorting layer/order if needed
-        // sr.sortingOrder = 10; 
 
         GetComponent<MeshRenderer>().enabled = false;
 

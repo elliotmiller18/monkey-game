@@ -29,6 +29,7 @@ public enum CardRank
 [System.Serializable]
 public class Card
 {
+    public const int NUM_RANKS = 13;
     public Suit suit;
     public CardRank rank;
 
@@ -82,5 +83,20 @@ public static class CardUtils
             deck[i] = deck[randomIndex];
             deck[randomIndex] = temp;
         }
+    }
+
+    public static int CardToIndex(Card c)
+    {
+        return (int)c.rank - 1;
+    }
+
+    public static int CardToIndex(CardRank r)
+    {
+        return (int)r - 1;
+    }
+
+    public static CardRank NextRank(CardRank r)
+    {
+        return r == CardRank.King ? CardRank.Ace : ++r;
     }
 }

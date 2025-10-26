@@ -83,11 +83,11 @@ public class MonkeyBSGame : MonoBehaviour
         style.normal.textColor = Color.white;
         style.alignment = TextAnchor.UpperLeft;
 
-        GUI.Label(new Rect(20, 20, 300, 50), $"Score: {score}", style);
+        // GUI.Label(new Rect(20, 20, 300, 50), $"Score: {score}", style);
 
         GUIStyle strikeStyle = new GUIStyle(style);
         strikeStyle.normal.textColor = strikes >= maxStrikes ? Color.red : (strikes >= 2 ? Color.yellow : Color.white);
-        GUI.Label(new Rect(20, 60, 300, 50), $"Strikes: {strikes}/{maxStrikes}", strikeStyle);
+        // GUI.Label(new Rect(20, 60, 300, 50), $"Strikes: {strikes}/{maxStrikes}", strikeStyle);
 
         if (gameOver)
         {
@@ -97,7 +97,7 @@ public class MonkeyBSGame : MonoBehaviour
             gameOverStyle.normal.textColor = Color.red;
             gameOverStyle.alignment = TextAnchor.MiddleCenter;
             
-            GUI.Label(new Rect(Screen.width / 2 - 300, Screen.height / 2 - 100, 600, 100), "GAME OVER!", gameOverStyle);
+            // GUI.Label(new Rect(Screen.width / 2 - 300, Screen.height / 2 - 100, 600, 100), "GAME OVER!", gameOverStyle);
             
             GUIStyle finalScoreStyle = new GUIStyle();
             finalScoreStyle.fontSize = 40;
@@ -105,7 +105,7 @@ public class MonkeyBSGame : MonoBehaviour
             finalScoreStyle.normal.textColor = Color.white;
             finalScoreStyle.alignment = TextAnchor.MiddleCenter;
             
-            GUI.Label(new Rect(Screen.width / 2 - 300, Screen.height / 2, 600, 50), $"Final Score: {score}", finalScoreStyle);
+            // GUI.Label(new Rect(Screen.width / 2 - 300, Screen.height / 2, 600, 50), $"Final Score: {score}", finalScoreStyle);
         }
     }
 
@@ -188,7 +188,7 @@ public class MonkeyBSGame : MonoBehaviour
         }
 
         TurnIndicator.instance.RevealCard(monkeyIndex);
-        Debug.Log($"Peeking at monkey with cards: {string.Join(", ", BSInterface.instance.GetMonkeyHand(monkeyIndex))}");
+        Debug.Log($"Peeking at monkey with cards: {string.Join(", ", BSGameLogic.instance.GetHand(monkeyIndex + 1))}");
     }
 
     void StopPeeking()
