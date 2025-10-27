@@ -38,6 +38,12 @@ public class BSGameLogic : MonoBehaviour
         instance = this;
     }
 
+    public void EndGame()
+    {
+        state = GameState.Inactive;
+        ResetGameButton.SetActive(true);
+    }
+
     void Start()
     {
         //TODO: make this dynamic for game regeneration with varying # of monkeys, it'll just be 5 for now
@@ -101,6 +107,7 @@ public class BSGameLogic : MonoBehaviour
 
         state = GameState.WaitingForPlay;
         HandManager.instance.RenderCards(hands[humanPlayerIndex]);
+        MonkeyBSGame.instance.RestartGame();
     }
 
     // play card and set lie flag depending on how many 
@@ -147,8 +154,7 @@ public class BSGameLogic : MonoBehaviour
         state = CheckForWin() ? GameState.Inactive : GameState.WaitingForPlay;
         if(CheckForWin())
         {
-            state = GameState.Inactive;
-            ResetGameButton.SetActive(true);
+            EndGame();
         } else
         {
             state = GameState.WaitingForPlay;

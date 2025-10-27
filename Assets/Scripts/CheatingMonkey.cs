@@ -26,15 +26,25 @@ public class MonkeyBSGame : MonoBehaviour
     public float minLookAwayDuration = 1.5f;
     public float maxLookAwayDuration = 3f;
 
-    [Header("UI - Optional")]
-    public GameObject cardDisplayUI;
-
     private Monkey currentlyPeekingAt;
     private bool isPeeking;
     private int score;
     private int strikes;
     private int maxStrikes = 3;
     private bool gameOver;
+
+    public static MonkeyBSGame instance;
+
+    void Awake()
+    {
+        if (instance != this && instance != null)
+        {
+            Debug.LogError("Duplicate MonkeyBSGame, destroying attached gameobject");
+            Destroy(gameObject);
+            return;
+        }
+        instance = this;
+    }
 
     void Start()
     {
@@ -57,9 +67,6 @@ public class MonkeyBSGame : MonoBehaviour
             }
         }
 
-        if (cardDisplayUI != null)
-            cardDisplayUI.SetActive(false);
-
         strikes = 0;
         gameOver = false;
 
@@ -72,40 +79,6 @@ public class MonkeyBSGame : MonoBehaviour
         if (!gameOver)
         {
             HandlePeekingInput();
-        }
-    }
-
-    void OnGUI()
-    {
-        GUIStyle style = new GUIStyle();
-        style.fontSize = 30;
-        style.fontStyle = FontStyle.Bold;
-        style.normal.textColor = Color.white;
-        style.alignment = TextAnchor.UpperLeft;
-
-        // GUI.Label(new Rect(20, 20, 300, 50), $"Score: {score}", style);
-
-        GUIStyle strikeStyle = new GUIStyle(style);
-        strikeStyle.normal.textColor = strikes >= maxStrikes ? Color.red : (strikes >= 2 ? Color.yellow : Color.white);
-        // GUI.Label(new Rect(20, 60, 300, 50), $"Strikes: {strikes}/{maxStrikes}", strikeStyle);
-
-        if (gameOver)
-        {
-            GUIStyle gameOverStyle = new GUIStyle();
-            gameOverStyle.fontSize = 60;
-            gameOverStyle.fontStyle = FontStyle.Bold;
-            gameOverStyle.normal.textColor = Color.red;
-            gameOverStyle.alignment = TextAnchor.MiddleCenter;
-            
-            // GUI.Label(new Rect(Screen.width / 2 - 300, Screen.height / 2 - 100, 600, 100), "GAME OVER!", gameOverStyle);
-            
-            GUIStyle finalScoreStyle = new GUIStyle();
-            finalScoreStyle.fontSize = 40;
-            finalScoreStyle.fontStyle = FontStyle.Bold;
-            finalScoreStyle.normal.textColor = Color.white;
-            finalScoreStyle.alignment = TextAnchor.MiddleCenter;
-            
-            // GUI.Label(new Rect(Screen.width / 2 - 300, Screen.height / 2, 600, 50), $"Final Score: {score}", finalScoreStyle);
         }
     }
 
@@ -182,11 +155,6 @@ public class MonkeyBSGame : MonoBehaviour
         isPeeking = true;
         currentlyPeekingAt = monkeys[monkeyIndex];
 
-        if (cardDisplayUI != null)
-        {
-            cardDisplayUI.SetActive(true);
-        }
-
         TurnIndicator.instance.RevealCard(monkeyIndex);
         Debug.Log($"Peeking at monkey with cards: {string.Join(", ", BSGameLogic.instance.GetHand(monkeyIndex + 1))}");
     }
@@ -197,15 +165,10 @@ public class MonkeyBSGame : MonoBehaviour
         {
             score += 5;
             Debug.Log($"Successfully peeked! +5 points. Total Score: {score} | Strikes: {strikes}/{maxStrikes}");
-            // it's hacky to put stuff in here but i'm just gonna thug it out yk
-
         }
 
         isPeeking = false;
         currentlyPeekingAt = null;
-
-        if (cardDisplayUI != null)
-            cardDisplayUI.SetActive(false);
     }
 
     void ClickedWhileLooking()
@@ -227,9 +190,6 @@ public class MonkeyBSGame : MonoBehaviour
         isPeeking = false;
         currentlyPeekingAt = null;
 
-        if (cardDisplayUI != null)
-            cardDisplayUI.SetActive(false);
-
         if (strikes >= maxStrikes)
         {
             GameOver();
@@ -242,6 +202,7 @@ public class MonkeyBSGame : MonoBehaviour
 
     void GameOver()
     {
+        BSGameLogic.instance.EndGame();
         gameOver = true;
         Debug.Log($"=== GAME OVER === Final Score: {score} | You got {maxStrikes} strikes!");
         
@@ -264,5 +225,43 @@ public class MonkeyBSGame : MonoBehaviour
         {
             monkey.monkeyRenderer.material.color = monkey.isLookingAway ? lookingAwayColor : lookingColor;
         }
+    }
+
+    public int GetStrikes()
+    {
+        return strikes;
+    }
+
+    public int GetMaxStrike()
+    {
+        return maxStrikes;
+    }
+
+    public void RestartGame()
+    {
+        // 1. Stop all active coroutines (RandomLookAwayRoutine, MonkeyLookAway, etc.)
+        StopAllCoroutines();
+
+        // 2. Reset game state variables
+        score = 0;
+        strikes = 0;
+        gameOver = false;
+        isPeeking = false;
+        currentlyPeekingAt = null;
+
+        // 3. Reset all monkeys to their starting state
+        foreach (var monkey in monkeys)
+        {
+            if (monkey.monkeyRenderer != null)
+            {
+                monkey.isLookingAway = false;
+                monkey.monkeyRenderer.material.color = lookingColor;
+            }
+        }
+
+        // 5. Start the main coroutine again
+        StartCoroutine(RandomLookAwayRoutine());
+        
+        Debug.Log($"--- GAME RESTARTED --- Score: {score} | Strikes: {strikes}/{maxStrikes}");
     }
 }
