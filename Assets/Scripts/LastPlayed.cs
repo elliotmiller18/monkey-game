@@ -19,7 +19,7 @@ public class CenterCard : MonoBehaviour
     {
         img.enabled = true;
         if (counterText != null) counterText.text = "X" + count;
-        img.sprite = TurnIndicator.instance.cardSprites[CardUtils.CardToIndex(r)];
+        img.sprite = TurnIndicator.instance.cardSprites[CardUtils.SuitedCardToIndex(r)];
     }
     
     public void Reset()
