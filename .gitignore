@@ -6,3 +6,7 @@ Library
 *.sln
 *.csproj
 *.dwlt
+*.json
+winbuild*
+macbuild*
+deliverables
