@@ -10,3 +10,5 @@ Library
 winbuild*
 macbuild*
 deliverables
+# editor settings
+UserSettings/EditorUserSettings*

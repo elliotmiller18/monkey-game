@@ -72,6 +72,12 @@ public class BSGameLogic : MonoBehaviour
         return hands[id];
     }
 
+    public List<Card> GetMonkeyHand(int id)
+    {
+        // id 0 is the player
+        return hands[id + 1];
+    }
+
     // start game, so divide the deck among each player
     public void StartGame(int numPlayers)
     {
@@ -104,6 +110,12 @@ public class BSGameLogic : MonoBehaviour
                 c++;
             }
         }
+
+        //TODO: use this when we want to make the card animation nicer
+        // for(int i = 0; i < hands.Count - 1; i++)
+        // {
+        //     MonkeyHands.instance.RenderMonkeyHand(i);
+        // }
 
         state = GameState.WaitingForPlay;
         HandManager.instance.RenderCards(hands[humanPlayerIndex]);
