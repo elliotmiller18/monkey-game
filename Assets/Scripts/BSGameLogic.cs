@@ -18,6 +18,7 @@ public class BSGameLogic : MonoBehaviour
     [SerializeField] GameObject ResetGameButton;
     public const int humanPlayerIndex = 0;
     int currentPlayer;
+    int lastPlayedCount; // NEW: Track how many cards were just played
     CardRank expectedRank = CardRank.Ace;
 
     GameState state = GameState.Inactive;
@@ -31,17 +32,10 @@ public class BSGameLogic : MonoBehaviour
     {
         if (instance != null && instance != this)
         {
-            Debug.LogError("Duplicate BSGameLogic, destroying");
             Destroy(gameObject);
             return;
         }
         instance = this;
-    }
-
-    public void EndGame()
-    {
-        state = GameState.Inactive;
-        ResetGameButton.SetActive(true);
     }
 
     void Start()
@@ -106,8 +100,14 @@ public class BSGameLogic : MonoBehaviour
         }
 
         state = GameState.WaitingForPlay;
+        
+        // NEW: Initialize AI (with null check)
+        if (BSAIController.instance != null)
+        {
+            BSAIController.instance.InitializeAI(numPlayers, hands);
+        }
+        
         HandManager.instance.RenderCards(hands[humanPlayerIndex]);
-        MonkeyBSGame.instance.RestartGame();
     }
 
     // play card and set lie flag depending on how many 
@@ -118,17 +118,37 @@ public class BSGameLogic : MonoBehaviour
 
         AudioSource.PlayClipAtPoint(clip, Camera.main.transform.position);
 
+        lastPlayedCount = played.Count; // NEW: Track count
         state = GameState.TruthTold;
+        
         foreach (Card c in played)
         {
             if (expectedRank != c.rank) state = GameState.LieTold;
             hands[currentPlayer].Remove(c);
             pile.Add(c);
+            
+            // NEW: Update AI knowledge
+            if (BSAIController.instance != null)
+            {
+                BSAIController.instance.OnCardPlayed(currentPlayer, c);
+            }
         }
 
         if (currentPlayer == humanPlayerIndex) HandManager.instance.RenderCards(hands[humanPlayerIndex]);
         LastPlayed.SwitchImage(expectedRank, played.Count);
         NextUp.SwitchImage(CardUtils.NextRank(expectedRank), 0);
+        
+        // Track the play for AI
+        if (BSAIController.instance != null)
+        {
+            BSAIController.instance.TrackPlay(expectedRank, lastPlayedCount, hands);
+        }
+        
+        // Start the timer for player to continue or AI to call
+        if (TurnTimer.instance != null)
+        {
+            TurnTimer.instance.StartTimer();
+        }
     }
 
     // call
@@ -138,10 +158,17 @@ public class BSGameLogic : MonoBehaviour
         Assert.AreNotEqual(caller, currentPlayer, "A player can't call BS on themselves");
         Assert.IsTrue(state == GameState.LieTold || state == GameState.TruthTold, "Trying to call while waiting for turn or game is inactive");
 
+        // Stop the timer when BS is called
+        if (TurnTimer.instance != null)
+        {
+            TurnTimer.instance.StopTimer();
+        }
+
         int victim = state == GameState.LieTold ? currentPlayer : caller;
         PickUpPile(victim);
 
-        Continue();
+        // After BS is called, advance directly without AI check
+        AdvanceToNextTurn();
     }
 
     // continue without a call
@@ -149,29 +176,68 @@ public class BSGameLogic : MonoBehaviour
     {
         Assert.IsTrue(state == GameState.LieTold || state == GameState.TruthTold, "Trying to continue while waiting for a turn or game is inactive");
 
+        // Stop the timer when continuing
+        if (TurnTimer.instance != null)
+        {
+            TurnTimer.instance.StopTimer();
+        }
+
+        // Give AI a chance to call BS before continuing
+        if (BSAIController.instance != null)
+        {
+            StartCoroutine(ContinueWithAICheck());
+        }
+        else
+        {
+            // No AI, just continue immediately
+            AdvanceToNextTurn();
+        }
+    }
+
+    System.Collections.IEnumerator ContinueWithAICheck()
+    {
+        int playerBeforeAICheck = currentPlayer;
+        yield return StartCoroutine(BSAIController.instance.CheckForAICalls());
+        if (currentPlayer != playerBeforeAICheck)
+        {
+            yield break;
+        }
+        AdvanceToNextTurn();
+    }
+
+    void AdvanceToNextTurn()
+    {
         currentPlayer = (currentPlayer + 1) % hands.Count;
         expectedRank = CardUtils.NextRank(expectedRank);
+        
         state = CheckForWin() ? GameState.Inactive : GameState.WaitingForPlay;
         if(CheckForWin())
         {
-            EndGame();
+            state = GameState.Inactive;
+            ResetGameButton.SetActive(true);
         } else
         {
             state = GameState.WaitingForPlay;
-            if (currentPlayer != humanPlayerIndex) PlayAITurn();
+            if (currentPlayer != humanPlayerIndex)
+            {
+                PlayAITurn();
+            }
         }
-
     }
 
-    // self explanatory
     void PickUpPile(int victim)
     {
-        // no assertion here cause it's just a helper function, there aren't any transitions
         hands[victim].AddRange(pile);
         if (victim == humanPlayerIndex)
         {
             HandManager.instance.RenderCards(hands[humanPlayerIndex]);
         }
+        
+        if (BSAIController.instance != null)
+        {
+            BSAIController.instance.OnPilePickedUp(victim, hands[victim]);
+        }
+        
         pile.Clear();
     }
 
@@ -184,19 +250,25 @@ public class BSGameLogic : MonoBehaviour
         return false;
     }
     
+    public void EndGame()
+    {
+        state = GameState.Inactive;
+        ResetGameButton.SetActive(true);
+    }
+    
     void PlayAITurn()
     {
         Assert.AreEqual(state, GameState.WaitingForPlay, "Trying to do ai turn while either waiting for call or continue or game is inactive");
         Assert.AreNotEqual(currentPlayer, humanPlayerIndex, "Trying to do ai turn while human player is expected to play");
-        // very simple for now, either play all cards such that AI isn't lying or if impossible just play the first card and lie
         List<Card> cardsToPlay = new List<Card>();
         foreach (Card c in hands[currentPlayer])
         {
             if (c.rank == expectedRank) cardsToPlay.Add(c);
         }
 
-        // we either play all fitting cards or just the first card
         if (cardsToPlay.Count == 0) cardsToPlay.Add(hands[currentPlayer][0]);
+        
+        // Debug.Log($"AI Player {currentPlayer} playing {cardsToPlay.Count} card(s)");
         PlayCards(cardsToPlay);
     }
 }
