@@ -41,6 +41,7 @@ public class BSGameLogic : MonoBehaviour
         state = GameState.Inactive;
         ResetGameButton.SetActive(true);
         LastPlayed.instance.HideTextAndButton();
+        Pile.instance.ClearPile();
     }
 
     void Start()
@@ -48,6 +49,11 @@ public class BSGameLogic : MonoBehaviour
         //TODO: make this dynamic for game regeneration with varying # of monkeys, it'll just be 5 for now
         int numPlayers = 5;
         StartGame(numPlayers);
+    }
+
+    public CardRank GetExpectedRank()
+    {
+        return expectedRank;
     }
 
     public bool IsHumanTurn()

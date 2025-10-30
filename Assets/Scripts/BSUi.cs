@@ -24,7 +24,7 @@ public class BSUi : MonoBehaviour
         {
             ContinueButton.SetActive(false);
             // could also be inactive
-            if(state == GameState.WaitingForPlay) ContinueWarning.text = "You need to play\na card !";
+            if(state == GameState.WaitingForPlay) ContinueWarning.text = "You need to play\na " + CardUtils.RankToString(BSGameLogic.instance.GetExpectedRank());
         }
     }
 
