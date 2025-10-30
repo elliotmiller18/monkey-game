@@ -29,7 +29,7 @@ public class TurnIndicator : MonoBehaviour
     void Start()
     {
         Assert.IsNotNull(monkeys);
-        Assert.AreEqual(cardSprites.Count, 13);
+        Assert.AreEqual(cardSprites.Count, 52);
     }
 
     void Update()

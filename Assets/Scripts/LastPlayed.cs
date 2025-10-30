@@ -15,11 +15,11 @@ public class CenterCard : MonoBehaviour
         if (counterText != null) counterText.text = "";
     }
 
-    public void SwitchImage(CardRank r, int count)
+    public void SwitchImage(Card c, int count)
     {
         img.enabled = true;
         if (counterText != null) counterText.text = "X" + count;
-        img.sprite = TurnIndicator.instance.cardSprites[CardUtils.CardToIndex(r)];
+        img.sprite = TurnIndicator.instance.cardSprites[CardUtils.SuitedCardToIndex(c)];
     }
     
     public void Reset()

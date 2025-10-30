@@ -3,10 +3,10 @@ using UnityEngine;
 
 public enum Suit
 {
-    Hearts,
-    Diamonds,
+    Clubs,
     Spades,
-    Clubs
+    Hearts,
+    Diamonds
 }
 
 public enum CardRank
@@ -98,5 +98,10 @@ public static class CardUtils
     public static CardRank NextRank(CardRank r)
     {
         return r == CardRank.King ? CardRank.Ace : ++r;
+    }
+
+    public static int SuitedCardToIndex(Card c)
+    {
+        return (int)c.suit * 13 + (int)c.rank - 1;
     }
 }

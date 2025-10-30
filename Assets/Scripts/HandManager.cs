@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 public class HandManager : MonoBehaviour
 {
-    Dictionary<CardRank, GameObject> rankToUIElt;
+    Dictionary<(CardRank rank, Suit suit), GameObject> cardToUIElt;
     [SerializeField] GameObject CardUIElement;
     float cardWidth;
 
@@ -20,29 +20,29 @@ public class HandManager : MonoBehaviour
             return;
         }
         instance = this;
-        rankToUIElt = new Dictionary<CardRank, GameObject>();
+        cardToUIElt = new Dictionary<(CardRank, Suit), GameObject>();
     }
 
     public void RenderCards(List<Card> cards)
     {
-        foreach (GameObject elt in rankToUIElt.Values)
+        foreach (GameObject elt in cardToUIElt.Values)
         {
             Destroy(elt);
         }
-        rankToUIElt.Clear();
+        cardToUIElt.Clear();
         
-        HashSet<CardRank> distinctRanks = new HashSet<CardRank>();
+        HashSet<(CardRank rank, Suit suit)> distinctCards = new HashSet<(CardRank, Suit)>();
         foreach (Card c in cards)
         {
-            distinctRanks.Add(c.rank);
+            distinctCards.Add((c.rank, c.suit));
         }
 
         float startingXPos = cardWidth;
-        startingXPos -= cardWidth * distinctRanks.Count / 2;
+        startingXPos -= cardWidth * distinctCards.Count / 2;
         
         foreach(Card c in cards)
         {
-            if (!rankToUIElt.ContainsKey(c.rank))
+            if (!cardToUIElt.ContainsKey((c.rank, c.suit)))
             {
                 // instantiate card as a child and then update its x pos
                 GameObject card = Instantiate(CardUIElement, transform);
@@ -52,11 +52,11 @@ public class HandManager : MonoBehaviour
                 card.transform.localPosition = newPos;
 
                 //TODO: put this cardSprites list in one central location
-                card.GetComponent<Image>().sprite = TurnIndicator.instance.cardSprites[CardUtils.CardToIndex(c)];
-                rankToUIElt[c.rank] = card;
+                card.GetComponent<Image>().sprite = TurnIndicator.instance.cardSprites[CardUtils.SuitedCardToIndex(c)];
+                cardToUIElt[(c.rank, c.suit)] = card;
             }
             // it's on the hover zone
-            rankToUIElt[c.rank].GetComponentInChildren<PlayCard>().AddCard(c);
+            cardToUIElt[(c.rank, c.suit)].GetComponentInChildren<PlayCard>().AddCard(c);
         }
     }
 }

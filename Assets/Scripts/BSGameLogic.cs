@@ -78,7 +78,7 @@ public class BSGameLogic : MonoBehaviour
         Assert.AreEqual(state, GameState.Inactive, "Trying to start a game while one is active");
 
         ResetGameButton.SetActive(false);
-        NextUp.SwitchImage(CardRank.Ace, 0);
+        NextUp.SwitchImage(new Card(Suit.Spades, CardRank.Ace), 0);
         LastPlayed.Reset();
 
         currentPlayer = humanPlayerIndex;
@@ -127,8 +127,8 @@ public class BSGameLogic : MonoBehaviour
         }
 
         if (currentPlayer == humanPlayerIndex) HandManager.instance.RenderCards(hands[humanPlayerIndex]);
-        LastPlayed.SwitchImage(expectedRank, played.Count);
-        NextUp.SwitchImage(CardUtils.NextRank(expectedRank), 0);
+        LastPlayed.SwitchImage(played[0], played.Count);
+        NextUp.SwitchImage(new Card(Suit.Spades, CardUtils.NextRank(expectedRank)), 0);
     }
 
     // call
