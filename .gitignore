@@ -7,6 +7,8 @@ Library
 *.csproj
 *.dwlt
 *.json
+**/.idea/
 winbuild*
 macbuild*
 deliverables
+obj

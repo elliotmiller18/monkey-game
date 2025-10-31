@@ -13,8 +13,6 @@ public enum GameState
 public class BSGameLogic : MonoBehaviour
 {
     [SerializeField] AudioClip clip;
-    [SerializeField] CenterCard LastPlayed;
-    [SerializeField] CenterCard NextUp;
     [SerializeField] GameObject ResetGameButton;
     public const int humanPlayerIndex = 0;
     int currentPlayer;
@@ -42,6 +40,8 @@ public class BSGameLogic : MonoBehaviour
     {
         state = GameState.Inactive;
         ResetGameButton.SetActive(true);
+        LastPlayed.instance.HideTextAndButton();
+        Pile.instance.ClearPile();
     }
 
     void Start()
@@ -49,6 +49,11 @@ public class BSGameLogic : MonoBehaviour
         //TODO: make this dynamic for game regeneration with varying # of monkeys, it'll just be 5 for now
         int numPlayers = 5;
         StartGame(numPlayers);
+    }
+
+    public CardRank GetExpectedRank()
+    {
+        return expectedRank;
     }
 
     public bool IsHumanTurn()
@@ -78,8 +83,6 @@ public class BSGameLogic : MonoBehaviour
         Assert.AreEqual(state, GameState.Inactive, "Trying to start a game while one is active");
 
         ResetGameButton.SetActive(false);
-        NextUp.SwitchImage(new Card(Suit.Spades, CardRank.Ace), 0);
-        LastPlayed.Reset();
 
         currentPlayer = humanPlayerIndex;
 
@@ -88,6 +91,7 @@ public class BSGameLogic : MonoBehaviour
 
         hands = new List<List<Card>>();
         pile = new List<Card>();
+        expectedRank = CardRank.Ace;
         
         for (int i = 0; i < numPlayers; i++)
         {
@@ -127,8 +131,9 @@ public class BSGameLogic : MonoBehaviour
         }
 
         if (currentPlayer == humanPlayerIndex) HandManager.instance.RenderCards(hands[humanPlayerIndex]);
-        LastPlayed.SwitchImage(played[0], played.Count);
-        NextUp.SwitchImage(new Card(Suit.Spades, CardUtils.NextRank(expectedRank)), 0);
+
+        LastPlayed.instance.UpdateText(currentPlayer, played.Count, expectedRank);
+        Pile.instance.AddCards(played.Count);
     }
 
     // call
@@ -173,6 +178,7 @@ public class BSGameLogic : MonoBehaviour
             HandManager.instance.RenderCards(hands[humanPlayerIndex]);
         }
         pile.Clear();
+        Pile.instance.ClearPile();
     }
 
     bool CheckForWin()
