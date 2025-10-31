@@ -1,30 +1,50 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.Assertions;
 
-public class CenterCard : MonoBehaviour
+public class LastPlayed : MonoBehaviour
 {
-    Image img;
-    TMP_Text counterText;
+    [SerializeField] TMP_Text text;
+    [SerializeField] GameObject BSButton;
+
+    public static LastPlayed instance;
 
     void Awake()
     {
-        img = GetComponent<Image>();
-        img.enabled = false;
-        counterText = GetComponentInChildren<TMP_Text>();
-        if (counterText != null) counterText.text = "";
+        Assert.IsNotNull(text, "text shouldn't be null!");
+        if (instance != null && instance != this)
+        {
+            Debug.LogError("duplicate lastplayed, destroying");
+            Destroy(gameObject);
+            return;
+        }
+        instance = this;
+        HideTextAndButton();
     }
 
-    public void SwitchImage(Card c, int count)
+    public void UpdateText(int playerIndex, int cardsPlayed, CardRank rank)
     {
-        img.enabled = true;
-        if (counterText != null) counterText.text = "X" + count;
-        img.sprite = TurnIndicator.instance.cardSprites[CardUtils.SuitedCardToIndex(c)];
+        Assert.IsFalse(cardsPlayed < 1, "can't update with less than 1 card played");
+        string end = cardsPlayed + " " + CardUtils.RankToString(rank) + (cardsPlayed > 1 ? "s" : "");
+        string start;
+
+        if (playerIndex == 0)
+        {
+            BSButton.SetActive(false);
+            start = "You claimed";
+        }
+        else
+        {
+            BSButton.SetActive(true);
+            start = "Monkey " + playerIndex + " claimed";
+        }
+
+        text.text = start + "\n" + end;
     }
-    
-    public void Reset()
+
+    public void HideTextAndButton()
     {
-        img.enabled = false;
-        if (counterText != null) counterText.text = "";
+        text.text = "";
+        BSButton.SetActive(false);
     }
 }
