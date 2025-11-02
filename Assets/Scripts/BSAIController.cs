@@ -13,6 +13,10 @@ public class BSAIController : MonoBehaviour
     private List<List<Card>> currentHands;
 
     public static BSAIController instance;
+    private Dictionary<CardRank, int> humanPlayerKnowledge; // What AI thinks human has
+    private bool hasValidPeekData = false;
+    private float peekDataConfidence = 1.0f; // 1.0 = very confident, 0.0 = not confident
+
 
     void Awake()
     {
@@ -115,12 +119,34 @@ public class BSAIController : MonoBehaviour
 
     bool ShouldAICall(int aiPlayer, int targetPlayer, CardRank expectedRank, int cardsPlayed, List<List<Card>> hands)
     {
+        if (targetPlayer == BSGameLogic.humanPlayerIndex && hasValidPeekData)
+        {
+            int peekedCardsOfRank = 0;
+            if (humanPlayerKnowledge.ContainsKey(expectedRank))
+            {
+                peekedCardsOfRank = humanPlayerKnowledge[expectedRank];
+            }
+
+            // If we peeked and they claimed to have cards they don't have (according to peek)
+            if (peekedCardsOfRank == 0 && peekDataConfidence > 0.7f)
+            {
+                Debug.Log($"AI {aiPlayer}: I peeked and human doesn't have {expectedRank}! Calling BS with high confidence.");
+                return Random.value < 0.85f; // 85% chance to call when we're confident they're lying
+            }
+
+            // If peek shows they DO have those cards, less likely to call
+            if (peekedCardsOfRank >= cardsPlayed)
+            {
+                Debug.Log($"AI {aiPlayer}: Peek data shows human likely has {expectedRank}. Not calling.");
+                return Random.value < 0.05f; // Only 5% chance to call
+            }
+        }
         int cardsOfExpectedRank = 0;
         if (aiKnowledge[aiPlayer].ContainsKey(expectedRank))
         {
             cardsOfExpectedRank = aiKnowledge[aiPlayer][expectedRank];
         }
-        
+
         float baseProbability = 0f;
         switch (cardsOfExpectedRank)
         {
@@ -130,10 +156,10 @@ public class BSAIController : MonoBehaviour
             case 3: baseProbability = 0.40f; break;
             case 4: baseProbability = 0.60f; break;
         }
-        
+
         int targetHandSize = hands[targetPlayer].Count;
         float handSizeMultiplier = 1.0f;
-        
+
         if (targetHandSize <= 3)
             handSizeMultiplier = 2.0f;
         else if (targetHandSize <= 6)
@@ -141,17 +167,58 @@ public class BSAIController : MonoBehaviour
         else if (targetHandSize <= 10)
             handSizeMultiplier = 1.2f;
         else if (targetHandSize >= 20)
-            handSizeMultiplier = 0.7f; 
-        
+            handSizeMultiplier = 0.7f;
+
         float finalProbability = Mathf.Clamp01(baseProbability * handSizeMultiplier);
-        
+
         if (cardsPlayed >= 3)
         {
             finalProbability = Mathf.Clamp01(finalProbability * 1.3f);
         }
-        
+
         float randomRoll = Random.value;
         bool willCall = randomRoll < finalProbability;
         return willCall;
+    }
+    public void MonkeyPeekedAtHuman(int monkeyIndex, string[] peekedCards, bool isRealData)
+    {
+        // Store the peeked information
+        humanPlayerKnowledge = new Dictionary<CardRank, int>();
+        
+        foreach (string cardStr in peekedCards)
+        {
+            CardRank rank = ParseCardRank(cardStr);
+            if (!humanPlayerKnowledge.ContainsKey(rank))
+                humanPlayerKnowledge[rank] = 0;
+            humanPlayerKnowledge[rank]++;
+        }
+        
+        hasValidPeekData = true;
+        peekDataConfidence = isRealData ? 1.0f : 0.6f; // Lower confidence for fake data
+        
+        Debug.Log($"Monkey {monkeyIndex} peeked at human. Saw: {string.Join(", ", peekedCards)} (Real: {isRealData}, Confidence: {peekDataConfidence})");
+    }
+
+    // ADD this helper method to BSAIController class:
+
+    CardRank ParseCardRank(string cardStr)
+    {
+        switch(cardStr)
+        {
+            case "A": return CardRank.Ace;
+            case "2": return CardRank.Two;
+            case "3": return CardRank.Three;
+            case "4": return CardRank.Four;
+            case "5": return CardRank.Five;
+            case "6": return CardRank.Six;
+            case "7": return CardRank.Seven;
+            case "8": return CardRank.Eight;
+            case "9": return CardRank.Nine;
+            case "10": return CardRank.Ten;
+            case "J": return CardRank.Jack;
+            case "Q": return CardRank.Queen;
+            case "K": return CardRank.King;
+            default: return CardRank.Ace;
+        }
     }
 }
