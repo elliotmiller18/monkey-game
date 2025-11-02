@@ -5,9 +5,17 @@ using UnityEngine;
 public class PlayCard : MonoBehaviour
 {
     private List<Card> cards;
+    bool selected;
+
+    public Card GetCard()
+    {
+        return cards[0];
+    }
+
     public void Awake()
     {
         cards = new List<Card>();
+        selected = false;
     }
 
     public void AddCard(Card c)
@@ -18,13 +26,22 @@ public class PlayCard : MonoBehaviour
 
     public void OnCardClicked()
     {
-        if (BSGameLogic.instance != null && BSGameLogic.instance.IsHumanTurn())
+        selected = !selected;
+
+        if (!selected)
         {
-            // good practice to ensure cards list is valid
-            if (cards != null && cards.Count > 0)
-            {
-                BSGameLogic.instance.PlayCards(cards);
-            }
+            Deselect();
+            return;
         }
+
+        GetComponent<CardHoverEffect>().ToggleFrozen();
+        CardSelect.instance.AddCard(this);
+    }
+    
+    public void Deselect()
+    {
+        selected = false;
+        CardSelect.instance.RemoveCard(this);
+        GetComponent<CardHoverEffect>().ToggleFrozen();
     }
 }

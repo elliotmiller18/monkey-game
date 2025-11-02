@@ -41,6 +41,7 @@ public class BSGameLogic : MonoBehaviour
         state = GameState.Inactive;
         ResetGameButton.SetActive(true);
         LastPlayed.instance.HideTextAndButton();
+        Debug.Log("ending game");
         Pile.instance.ClearPile();
         if (BSAICheat.instance != null)
         {
