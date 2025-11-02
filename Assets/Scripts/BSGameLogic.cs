@@ -42,6 +42,10 @@ public class BSGameLogic : MonoBehaviour
         ResetGameButton.SetActive(true);
         LastPlayed.instance.HideTextAndButton();
         Pile.instance.ClearPile();
+        if (BSAICheat.instance != null)
+        {
+            BSAICheat.instance.StopPeekSystem();
+        }
     }
 
     void Start()
@@ -111,10 +115,14 @@ public class BSGameLogic : MonoBehaviour
 
         state = GameState.WaitingForPlay;
         
-        // NEW: Initialize AI (with null check)
         if (BSAIController.instance != null)
         {
             BSAIController.instance.InitializeAI(numPlayers, hands);
+        }
+        
+        if (BSAICheat.instance != null)
+        {
+            BSAICheat.instance.StartPeekSystem();
         }
         
         HandManager.instance.RenderCards(hands[humanPlayerIndex]);
