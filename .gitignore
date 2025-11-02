@@ -12,3 +12,4 @@ winbuild*
 macbuild*
 deliverables
 obj
+**/UserSettings/Layouts/
