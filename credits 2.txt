@@ -1,5 +1,0 @@
-Card assets are from this: https://natomarcacini.itch.io/card-asset-pack
-
-CardHoverEffect.cs is entirely written by Gemini
-
-card collisions sound effect (and all card related audio clips are also derived from it) is from this: https://pixabay.com/sound-effects/card-collisions-40583/
