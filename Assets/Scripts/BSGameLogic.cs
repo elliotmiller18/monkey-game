@@ -183,6 +183,8 @@ public class BSGameLogic : MonoBehaviour
             TurnTimer.instance.StopTimer();
         }
 
+        CallArrow.instance.DrawArrow(caller, currentPlayer, state == GameState.LieTold);
+        
         int victim = state == GameState.LieTold ? currentPlayer : caller;
         PickUpPile(victim);
 
