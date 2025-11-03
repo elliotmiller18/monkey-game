@@ -38,6 +38,7 @@ public class BSGameLogic : MonoBehaviour
 
     public void EndGame()
     {
+        Debug.Log("Ending game called");
         state = GameState.Inactive;
         ResetGameButton.SetActive(true);
         LastPlayed.instance.HideTextAndButton();
