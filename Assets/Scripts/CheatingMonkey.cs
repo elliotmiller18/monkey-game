@@ -39,11 +39,21 @@ public class MonkeyBSGame : MonoBehaviour
     {
         if (instance != this && instance != null)
         {
-            Debug.LogError("Duplicate MonkeyBSGame, destroying attached gameobject");
             Destroy(gameObject);
             return;
         }
         instance = this;
+    
+        if (monkeys != null)
+        {
+            foreach (var monkey in monkeys)
+            {
+                if (monkey != null && monkey.monkeyObject != null)
+                {
+                    monkey.originalRotation = monkey.monkeyObject.transform.rotation;
+                }
+            }
+        }
     }
 
     void Start()
@@ -68,8 +78,6 @@ public class MonkeyBSGame : MonoBehaviour
         {
             var monkey = monkeys[i];
             
-            // Store the original rotation
-            monkey.originalRotation = monkey.monkeyObject.transform.rotation;
             monkey.isLookingAway = false;
             
             if (monkey.cards == null || monkey.cards.Length == 0)
@@ -312,5 +320,21 @@ public class MonkeyBSGame : MonoBehaviour
         StartCoroutine(RandomLookAwayRoutine());
         
         Debug.Log($"--- GAME RESTARTED --- Score: {score} | Strikes: {strikes}/{maxStrikes}");
+    }
+    
+    public void PlayCardAnimation(int monkeyIndex)
+    {
+        if (monkeyIndex >= 0 && monkeyIndex < monkeys.Count)
+        {
+            GameObject monkeyObj = monkeys[monkeyIndex].monkeyObject;
+            if (monkeyObj != null)
+            {
+                Animation anim = monkeyObj.GetComponent<Animation>();
+                if (anim != null)
+                {
+                    anim.Play();
+                }
+            }
+        }
     }
 }

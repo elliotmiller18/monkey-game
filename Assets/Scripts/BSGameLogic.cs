@@ -16,9 +16,8 @@ public class BSGameLogic : MonoBehaviour
     [SerializeField] GameObject ResetGameButton;
     public const int humanPlayerIndex = 0;
     int currentPlayer;
-    int lastPlayedCount; // NEW: Track how many cards were just played
+    int lastPlayedCount;
     CardRank expectedRank = CardRank.Ace;
-
     GameState state = GameState.Inactive;
 
     List<List<Card>> hands;
@@ -138,6 +137,14 @@ public class BSGameLogic : MonoBehaviour
         Assert.AreNotEqual(played.Count, 0, "Can't play zero cards");
 
         AudioSource.PlayClipAtPoint(clip, Camera.main.transform.position);
+
+        // NEW: Play card animation for the current player
+        if (MonkeyBSGame.instance != null && currentPlayer != humanPlayerIndex)
+        {
+            // currentPlayer is indexed from 0, but monkey list might need adjustment
+            // Subtract 1 because player 0 is human, monkeys start at index 0 for player 1
+            MonkeyBSGame.instance.PlayCardAnimation(currentPlayer - 1);
+        }
 
         lastPlayedCount = played.Count; // NEW: Track count
         state = GameState.TruthTold;
@@ -288,7 +295,6 @@ public class BSGameLogic : MonoBehaviour
 
         if (cardsToPlay.Count == 0) cardsToPlay.Add(hands[currentPlayer][0]);
         
-        // Debug.Log($"AI Player {currentPlayer} playing {cardsToPlay.Count} card(s)");
         PlayCards(cardsToPlay);
     }
 }
