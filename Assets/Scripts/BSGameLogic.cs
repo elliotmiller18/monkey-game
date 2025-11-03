@@ -38,6 +38,9 @@ public class BSGameLogic : MonoBehaviour
 
     public void EndGame()
     {
+        Debug.LogError($"[GAME] EndGame() called at time {Time.time}!");
+        Debug.LogError("[GAME] STACK TRACE: " + System.Environment.StackTrace);
+        
         state = GameState.Inactive;
         ResetGameButton.SetActive(true);
         LastPlayed.instance.HideTextAndButton();

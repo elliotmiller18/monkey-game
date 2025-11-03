@@ -3252,8 +3252,8 @@ MonoBehaviour:
   resultText: {fileID: 1979167922}
   deflectTimeLimit: 3
   clicksNeeded: 15
-  minPeekInterval: 30
-  maxPeekInterval: 90
+  minPeekInterval: 10
+  maxPeekInterval: 20
   deflectSuccessPoints: 10
 --- !u!1 &1674254764
 GameObject:

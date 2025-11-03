@@ -16,15 +16,15 @@ public class BSAICheat : MonoBehaviour
     [Header("Deflect Settings")]
     public float deflectTimeLimit = 3f; // Seconds player has to fill the circle
     public int clicksNeeded = 15; // Number of clicks needed to deflect
-    public float minPeekInterval = 45f; // Minimum time between peek attempts
-    public float maxPeekInterval = 120f; // Maximum time between peek attempts
+    public float minPeekInterval = 10f; // Minimum time between peek attempts
+    public float maxPeekInterval = 20f; // Maximum time between peek attempts
     
     [Header("Scoring")]
     public int deflectSuccessPoints = 10;
     private int currentClicks;
     private float deflectTimer;
     private bool isDeflecting;
-    private int peekingMonkeyIndex; // Which monkey is peeking (1-3)
+    private int peekingMonkeyIndex; 
     private bool gameActive;
 
     public static BSAICheat instance;
@@ -67,12 +67,29 @@ public class BSAICheat : MonoBehaviour
 
     public void StartPeekSystem()
     {
+        Debug.Log($"[PEEK SYSTEM] StartPeekSystem called at time {Time.time}!");
+        
+        // Stop any existing peek routines
+        StopAllCoroutines();
+        
+        // Reset all state
         gameActive = true;
+        isDeflecting = false;
+        
+        // Hide UI if it was showing
+        if (deflectUI != null)
+            deflectUI.SetActive(false);
+        
+        // Start fresh coroutine
         StartCoroutine(MonkeyPeekAttemptRoutine());
+        
+        Debug.Log("[PEEK SYSTEM] Coroutine started successfully!");
     }
 
     public void StopPeekSystem()
     {
+        Debug.Log($"[PEEK SYSTEM] StopPeekSystem called at time {Time.time}!");
+        Debug.LogError("[PEEK SYSTEM] STACK TRACE: " + System.Environment.StackTrace);
         gameActive = false;
         StopAllCoroutines();
         
@@ -84,24 +101,47 @@ public class BSAICheat : MonoBehaviour
 
     IEnumerator MonkeyPeekAttemptRoutine()
     {
+        Debug.Log($"[PEEK SYSTEM] MonkeyPeekAttemptRoutine started! Time: {Time.time}");
+        
         while (gameActive)
         {
-            // Wait random time before next peek attempt
-            int secondsToWait = Random.Range((int)minPeekInterval, (int)maxPeekInterval);
-            Debug.Log($"Next monkey peek attempt in {secondsToWait} seconds");
-            yield return new WaitForSeconds(secondsToWait);
-        
-            
-            // Don't interrupt if already deflecting
-            if (!isDeflecting)
+            // CHECK FIRST before waiting
+            if (!gameActive)
             {
-                // Pick random monkey (1, 2, 4, or 3)
-                int randomMonkey = Random.Range(1, 5);
-                StartDeflectMinigame(randomMonkey);
+                Debug.Log($"[PEEK SYSTEM] gameActive false at loop start, exiting");
+                yield break;
             }
+            
+            // Wait random time before next peek attempt
+            float secondsToWait = Random.Range(minPeekInterval, maxPeekInterval);
+            float startTime = Time.time;
+            Debug.Log($"[PEEK SYSTEM] Waiting {secondsToWait}s. Current time: {Time.time}, gameActive: {gameActive}");
+            
+            yield return new WaitForSeconds(secondsToWait);
+            
+            float endTime = Time.time;
+            float actualWaitTime = endTime - startTime;
+            Debug.Log($"[PEEK SYSTEM] Wait finished after {actualWaitTime}s. gameActive: {gameActive}, isDeflecting: {isDeflecting}");
+            
+            if (!gameActive)
+            {
+                Debug.Log($"[PEEK SYSTEM] Game no longer active at time {Time.time}, stopping peek routine");
+                yield break;
+            }
+            
+            if (isDeflecting)
+            {
+                Debug.Log("[PEEK SYSTEM] Already deflecting, skipping this peek attempt");
+                continue;
+            }
+            
+            int randomMonkey = Random.Range(1, 5);
+            Debug.Log($"[PEEK SYSTEM] Starting peek with Monkey {randomMonkey} at time {Time.time}");
+            StartDeflectMinigame(randomMonkey);
         }
+        
+        Debug.Log($"[PEEK SYSTEM] Peek routine ended at time {Time.time}");
     }
-
     void StartDeflectMinigame(int monkeyIndex)
     {
         isDeflecting = true;
