@@ -7,7 +7,6 @@ public class TurnIndicator : MonoBehaviour
 {
     //TODO: move this somewhere more central in the future
     [SerializeField] public List<Sprite> cardSprites;
-    [SerializeField] List<GameObject> monkeys;
     [SerializeField] float y_offset = 1;
     [SerializeField] float rps = 1;
     [SerializeField] float cardShowTime = 1f;
@@ -28,7 +27,6 @@ public class TurnIndicator : MonoBehaviour
 
     void Start()
     {
-        Assert.IsNotNull(monkeys);
         Assert.AreEqual(cardSprites.Count, 52);
     }
 
@@ -39,7 +37,7 @@ public class TurnIndicator : MonoBehaviour
         {
             if(!cardShowing) GetComponent<MeshRenderer>().enabled = true;
             // the list of monkeys is 1 less than the number of players
-            Vector3 new_pos = monkeys[BSGameLogic.instance.GetPlayer() - 1].transform.position;
+            Vector3 new_pos = MonkeyObjects.GetMonkey(BSGameLogic.instance.GetPlayer() - 1).transform.position;
             new_pos.y += y_offset;
             transform.position = new_pos;
         }
@@ -62,7 +60,7 @@ public class TurnIndicator : MonoBehaviour
         Sprite cardSprite = cardSprites[(int)hand[randIndex].rank - 1];
 
         GameObject cardInstance = new GameObject("CardSprite");
-        Vector3 new_pos = monkeys[monkeyIndex].transform.position;
+        Vector3 new_pos = MonkeyObjects.GetMonkey(monkeyIndex).transform.position;
         new_pos.y += y_offset;
         cardInstance.transform.position = new_pos;
         SpriteRenderer sr = cardInstance.AddComponent<SpriteRenderer>();

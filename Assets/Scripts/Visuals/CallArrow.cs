@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class CallArrow : MonoBehaviour
 {
-    [SerializeField] List<Transform> playerTransforms;
+    [SerializeField] Transform humanTransform;
+    List<Transform> playerTransforms;
     [SerializeField] float timeOnScreen = 1.5f;
     [SerializeField] GameObject arrowPrefab;
 
@@ -21,6 +22,9 @@ public class CallArrow : MonoBehaviour
             return;
         }
         instance = this;
+        
+        playerTransforms = new List<Transform> { humanTransform };
+        playerTransforms.AddRange(MonkeyObjects.monkeys.ConvertAll(g => g.transform));
     }
 
     public void DrawArrow(int callerId, int victimId, bool successful)
