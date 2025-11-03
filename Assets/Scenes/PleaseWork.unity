@@ -1724,10 +1724,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerTransforms:
   - {fileID: 575709272}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 1796039989}
+  - {fileID: 1333473471}
+  - {fileID: 560538750}
+  - {fileID: 921788176}
   timeOnScreen: 1.5
   arrowPrefab: {fileID: 7760945800068211069, guid: 3dcf51539e6e24fcea7ee1d8d5268260, type: 3}
 --- !u!1 &560538747 stripped
@@ -4237,10 +4237,10 @@ MonoBehaviour:
   - {fileID: 1627590834, guid: 9a1318b61bc13414488aa1bca1006c91, type: 3}
   - {fileID: 1687569584, guid: 9a1318b61bc13414488aa1bca1006c91, type: 3}
   monkeys:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 1796039986}
+  - {fileID: 1333473468}
+  - {fileID: 560538747}
+  - {fileID: 921788173}
   y_offset: 5
   rps: 0.5
   cardShowTime: 1
