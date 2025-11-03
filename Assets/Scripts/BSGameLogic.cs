@@ -183,9 +183,12 @@ public class BSGameLogic : MonoBehaviour
             TurnTimer.instance.StopTimer();
         }
 
-        CallArrow.instance.DrawArrow(caller, currentPlayer, state == GameState.LieTold);
+        bool successful = state == GameState.LieTold;
+
+        CallArrow.instance.DrawArrow(caller, currentPlayer, successful);
+        CallAudio.instance.PlayCallClip(successful);
         
-        int victim = state == GameState.LieTold ? currentPlayer : caller;
+        int victim = successful ? currentPlayer : caller;
         PickUpPile(victim);
 
         // After BS is called, advance directly without AI check

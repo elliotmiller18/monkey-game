@@ -45,7 +45,6 @@ public class BSUi : MonoBehaviour
         if ((state == GameState.LieTold || state == GameState.TruthTold) && BSGameLogic.instance.GetPlayer() != 0)
         {
             BSGameLogic.instance.Call(BSGameLogic.humanPlayerIndex);
-            CallStatusText.text = state == GameState.LieTold ? "Call successful!" : "Call failed..";
         }
         else if((state == GameState.LieTold || state == GameState.TruthTold) && BSGameLogic.instance.GetPlayer() == 0)
         {
