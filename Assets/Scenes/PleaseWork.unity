@@ -3929,19 +3929,19 @@ MonoBehaviour:
   - monkeyObject: {fileID: 1796039986}
     cards: []
     isLookingAway: 0
-    originalRotation: {x: 0, y: 0, z: 0, w: 0}
+    originalRotation: {x: 0, y: 0.10608185, z: 0, w: 0.9943574}
   - monkeyObject: {fileID: 1333473468}
     cards: []
     isLookingAway: 0
-    originalRotation: {x: 0, y: 0, z: 0, w: 0}
+    originalRotation: {x: 0, y: 0.37696803, z: 0, w: 0.92622626}
   - monkeyObject: {fileID: 560538747}
     cards: []
     isLookingAway: 0
-    originalRotation: {x: 0, y: 0, z: 0, w: 0}
+    originalRotation: {x: 0, y: 0.64701605, z: 0, w: 0.7624764}
   - monkeyObject: {fileID: 921788173}
     cards: []
     isLookingAway: 0
-    originalRotation: {x: 0, y: 0, z: 0, w: 0}
+    originalRotation: {x: 0, y: 0.78389394, z: 0, w: 0.62089473}
   rotationDegrees: 90
   rotationSpeed: 5
   minLookAwayInterval: 2
