@@ -11,9 +11,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/TitleScreen.unity
     guid: 4072a0f1234cd435e85b5062e36ebb47
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/BSGui.unity
     guid: eae89ed76c065465d90be55f0fa23e08
+  - enabled: 1
+    path: Assets/Scenes/PleaseWork.unity
+    guid: 2ee921ec3a2bf42879620847a15d95c7
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

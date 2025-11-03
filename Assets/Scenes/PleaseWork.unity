@@ -3572,9 +3572,9 @@ MonoBehaviour:
   fillCircle: {fileID: 592526816}
   clickButton: {fileID: 592526815}
   resultText: {fileID: 809872840}
-  deflectTimeLimit: 1.2
-  clicksNeeded: 5
-  minPeekInterval: 15
+  deflectTimeLimit: 2
+  clicksNeeded: 8
+  minPeekInterval: 10
   maxPeekInterval: 30
   deflectSuccessPoints: 10
 --- !u!1 &1667794378
