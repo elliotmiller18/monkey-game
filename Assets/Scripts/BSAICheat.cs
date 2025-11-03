@@ -41,7 +41,6 @@ public class BSAICheat : MonoBehaviour
 
     void Start()
     {
-        // Setup deflect UI
         if (deflectUI != null)
             deflectUI.SetActive(false);
         
@@ -73,6 +72,7 @@ public class BSAICheat : MonoBehaviour
 
     public void StopPeekSystem()
     {
+        Debug.Log("Stopping peek system");
         gameActive = false;
         StopAllCoroutines();
         
@@ -84,6 +84,8 @@ public class BSAICheat : MonoBehaviour
 
     IEnumerator MonkeyPeekAttemptRoutine()
     {
+        Debug.Log("Starting monkey peek attempt routine");
+        Debug.Log("gameactive: " + gameActive);
         while (gameActive)
         {
             // Wait random time before next peek attempt
@@ -91,7 +93,7 @@ public class BSAICheat : MonoBehaviour
             Debug.Log($"Next monkey peek attempt in {secondsToWait} seconds");
             yield return new WaitForSeconds(secondsToWait);
         
-            
+            Debug.Log("isDeflecting: " + isDeflecting);
             // Don't interrupt if already deflecting
             if (!isDeflecting)
             {
@@ -167,12 +169,13 @@ public class BSAICheat : MonoBehaviour
         
         // Add points (you might want to integrate this with your scoring system)
         Debug.Log($"Deflect bonus! +{deflectSuccessPoints} points");
-        
+
         StartCoroutine(HideDeflectUI());
     }
 
     void DeflectFailed()
     {
+        Debug.Log("Deflect failed!");
         isDeflecting = false;
         
         if (resultText != null)
@@ -192,16 +195,24 @@ public class BSAICheat : MonoBehaviour
         
         // Send real cards to AI
         BSAIController.instance.MonkeyPeekedAtHuman(peekingMonkeyIndex, realCards, true);
-        
+
         StartCoroutine(HideDeflectUI());
+        
     }
 
     IEnumerator HideDeflectUI()
     {
         yield return new WaitForSeconds(1.5f);
-        
+
         if (deflectUI != null)
             deflectUI.SetActive(false);
+        Debug.Log("gameActive: " + gameActive);
+        Debug.Log("isDeflecting: " + isDeflecting);
+        if (!isDeflecting)
+        {
+            Debug.Log("[PeekSystem] Resuming peek loop");
+            StartPeekSystem();
+        }
     }
 
     string GetRankString(CardRank rank)
