@@ -21,7 +21,6 @@ public class PlayCard : MonoBehaviour
     public void AddCard(Card c)
     {
         cards.Add(c);
-        GetComponentInChildren<TMP_Text>().text = "X" + cards.Count;
     }
 
     public void OnCardClicked()
