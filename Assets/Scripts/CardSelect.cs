@@ -2,12 +2,14 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.UI;
 
 public class CardSelect : MonoBehaviour
 {
 
     public static CardSelect instance;
     Queue<PlayCard> cardsToPlay;
+    Button button;
     // what if i have a queue of card UI Elements
 
     void Awake()
@@ -20,6 +22,12 @@ public class CardSelect : MonoBehaviour
         }
         instance = this;
         cardsToPlay = new Queue<PlayCard>();
+        button = GetComponent<Button>();
+    }
+
+    void Update()
+    {
+        button.enabled = cardsToPlay.Count > 0;
     }
 
     public void AddCard(PlayCard cardUIElt)
@@ -42,7 +50,8 @@ public class CardSelect : MonoBehaviour
     public void PlayPile()
     {
         if (!BSGameLogic.instance.IsHumanTurn()) return;
-        
+        if (cardsToPlay.Count == 0) return;
+
         List<Card> cardList = new List<Card>();
         while (cardsToPlay.Count > 0)
         {
