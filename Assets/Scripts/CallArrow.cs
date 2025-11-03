@@ -25,6 +25,43 @@ public class CallArrow : MonoBehaviour
 
     public void DrawArrow(int callerId, int victimId, bool successful)
     {
+        // Null checks
+        if (playerTransforms == null || playerTransforms.Count == 0)
+        {
+            Debug.LogError("playerTransforms is not assigned or empty! Assign player transforms in the Inspector.");
+            return;
+        }
+
+        if (callerId < 0 || callerId >= playerTransforms.Count)
+        {
+            Debug.LogError($"Invalid callerId {callerId}. Must be between 0 and {playerTransforms.Count - 1}");
+            return;
+        }
+
+        if (victimId < 0 || victimId >= playerTransforms.Count)
+        {
+            Debug.LogError($"Invalid victimId {victimId}. Must be between 0 and {playerTransforms.Count - 1}");
+            return;
+        }
+
+        if (playerTransforms[callerId] == null)
+        {
+            Debug.LogError($"playerTransforms[{callerId}] is null!");
+            return;
+        }
+
+        if (playerTransforms[victimId] == null)
+        {
+            Debug.LogError($"playerTransforms[{victimId}] is null!");
+            return;
+        }
+
+        if (arrowPrefab == null)
+        {
+            Debug.LogError("arrowPrefab is not assigned! Assign an arrow prefab in the Inspector.");
+            return;
+        }
+
         if (lastArrow != null) DeleteArrow();
 
         Vector3 start = playerTransforms[callerId].position;
@@ -54,7 +91,10 @@ public class CallArrow : MonoBehaviour
     
     public void DeleteArrow()
     {
-        Destroy(lastArrow);
-        lastArrow = null;
+        if (lastArrow != null)
+        {
+            Destroy(lastArrow);
+            lastArrow = null;
+        }
     }
 }
