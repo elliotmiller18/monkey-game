@@ -13,3 +13,5 @@ macbuild*
 deliverables
 obj
 **/UserSettings/Layouts/
+**/UserSettings/layouts/
+UserSettings/EditorUserSettings.asset
