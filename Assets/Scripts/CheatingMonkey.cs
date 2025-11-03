@@ -10,15 +10,15 @@ public class MonkeyBSGame : MonoBehaviour
         public GameObject monkeyObject;
         public string[] cards;
         public bool isLookingAway;
-        public Renderer monkeyRenderer;
+        public Quaternion originalRotation;
     }
 
     [Header("Monkey Setup")]
     public List<Monkey> monkeys = new List<Monkey>();
 
-    [Header("Colors")]
-    public Color lookingColor = new Color(0.65f, 0.4f, 0.2f);
-    public Color lookingAwayColor = Color.green;
+    [Header("Rotation Settings")]
+    public float rotationDegrees = 90f;
+    public float rotationSpeed = 5f;
 
     [Header("Timing")]
     public float minLookAwayInterval = 2f;
@@ -48,23 +48,36 @@ public class MonkeyBSGame : MonoBehaviour
 
     void Start()
     {
-        foreach (var monkey in monkeys)
+        // Check if monkeys list is empty
+        if (monkeys == null || monkeys.Count == 0)
         {
-            monkey.monkeyRenderer = monkey.monkeyObject.GetComponent<Renderer>();
+            Debug.LogError("No monkeys assigned! Add monkeys to the list in the Inspector.");
+            return;
+        }
+
+        // Remove any null entries and validate
+        monkeys.RemoveAll(m => m == null || m.monkeyObject == null);
+
+        if (monkeys.Count == 0)
+        {
+            Debug.LogError("All monkey entries are null! Assign GameObjects in the Inspector.");
+            return;
+        }
+
+        for (int i = 0; i < monkeys.Count; i++)
+        {
+            var monkey = monkeys[i];
             
-            if (monkey.monkeyRenderer == null)
-            {
-                Debug.LogError($"No Renderer found on {monkey.monkeyObject.name}!");
-                continue;
-            }
-            
+            // Store the original rotation
+            monkey.originalRotation = monkey.monkeyObject.transform.rotation;
             monkey.isLookingAway = false;
-            monkey.monkeyRenderer.material.color = lookingColor;
             
             if (monkey.cards == null || monkey.cards.Length == 0)
             {
                 monkey.cards = new string[] { "A♠", "K♥", "3♦" };
             }
+            
+            Debug.Log($"Monkey {i} ({monkey.monkeyObject.name}) initialized successfully");
         }
 
         strikes = 0;
@@ -89,7 +102,7 @@ public class MonkeyBSGame : MonoBehaviour
             float waitTime = Random.Range(minLookAwayInterval, maxLookAwayInterval);
             yield return new WaitForSeconds(waitTime);
 
-            List<Monkey> availableMonkeys = monkeys.FindAll(m => !m.isLookingAway);
+            List<Monkey> availableMonkeys = monkeys.FindAll(m => m != null && m.monkeyObject != null && !m.isLookingAway);
             
             if (availableMonkeys.Count > 0)
             {
@@ -101,14 +114,58 @@ public class MonkeyBSGame : MonoBehaviour
 
     IEnumerator MonkeyLookAway(Monkey monkey)
     {
+        if (monkey == null || monkey.monkeyObject == null)
+        {
+            Debug.LogWarning("Attempted to rotate a null monkey");
+            yield break;
+        }
+
         monkey.isLookingAway = true;
-        monkey.monkeyRenderer.material.color = lookingAwayColor;
+        
+        // Randomly choose left or right rotation
+        float direction = Random.value > 0.5f ? 1f : -1f;
+        Quaternion targetRotation = monkey.originalRotation * Quaternion.Euler(0, rotationDegrees * direction, 0);
+        
+        // Smoothly rotate to look away
+        float elapsed = 0;
+        Quaternion startRotation = monkey.monkeyObject.transform.rotation;
+        while (elapsed < 1f / rotationSpeed)
+        {
+            if (monkey.monkeyObject == null) yield break; // Safety check
+            
+            elapsed += Time.deltaTime;
+            monkey.monkeyObject.transform.rotation = Quaternion.Slerp(startRotation, targetRotation, elapsed * rotationSpeed);
+            yield return null;
+        }
+        
+        if (monkey.monkeyObject != null)
+        {
+            monkey.monkeyObject.transform.rotation = targetRotation;
+        }
 
         float duration = Random.Range(minLookAwayDuration, maxLookAwayDuration);
         yield return new WaitForSeconds(duration);
 
+        if (monkey.monkeyObject == null) yield break; // Safety check
+
+        // Smoothly rotate back to original position
+        elapsed = 0;
+        startRotation = monkey.monkeyObject.transform.rotation;
+        while (elapsed < 1f / rotationSpeed)
+        {
+            if (monkey.monkeyObject == null) yield break; // Safety check
+            
+            elapsed += Time.deltaTime;
+            monkey.monkeyObject.transform.rotation = Quaternion.Slerp(startRotation, monkey.originalRotation, elapsed * rotationSpeed);
+            yield return null;
+        }
+        
+        if (monkey.monkeyObject != null)
+        {
+            monkey.monkeyObject.transform.rotation = monkey.originalRotation;
+        }
+        
         monkey.isLookingAway = false;
-        monkey.monkeyRenderer.material.color = lookingColor;
 
         if (isPeeking && currentlyPeekingAt == monkey)
         {
@@ -123,11 +180,14 @@ public class MonkeyBSGame : MonoBehaviour
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
 
-            if (Physics.Raycast(ray, out hit))
+            // Raycast against everything EXCEPT the table layer
+            int ignoreTableLayer = ~(1 << LayerMask.NameToLayer("Table")); // Ignores "Table" layer
+        
+            if (Physics.Raycast(ray, out hit, Mathf.Infinity, ignoreTableLayer))
             {
-                int clickedMonkeyIndex = monkeys.FindIndex(m => m.monkeyObject == hit.collider.gameObject);
-                
-                if (monkeys[clickedMonkeyIndex] != null)
+                int clickedMonkeyIndex = monkeys.FindIndex(m => m != null && m.monkeyObject == hit.collider.gameObject);
+            
+                if (clickedMonkeyIndex >= 0 && clickedMonkeyIndex < monkeys.Count)
                 {
                     if (monkeys[clickedMonkeyIndex].isLookingAway)
                     {
@@ -149,14 +209,22 @@ public class MonkeyBSGame : MonoBehaviour
             }
         }
     }
-
+    
     void StartPeeking(int monkeyIndex)
     {
         isPeeking = true;
         currentlyPeekingAt = monkeys[monkeyIndex];
 
-        TurnIndicator.instance.RevealCard(monkeyIndex);
-        Debug.Log($"Peeking at monkey with cards: {string.Join(", ", BSGameLogic.instance.GetHand(monkeyIndex + 1))}");
+        // Check if TurnIndicator exists and isn't destroyed
+        if (TurnIndicator.instance != null && TurnIndicator.instance)
+        {
+            TurnIndicator.instance.RevealCard(monkeyIndex);
+        }
+
+        if (BSGameLogic.instance != null && BSGameLogic.instance)
+        {
+            Debug.Log($"Peeking at monkey with cards: {string.Join(", ", BSGameLogic.instance.GetHand(monkeyIndex + 1))}");
+        }
     }
 
     void StopPeeking()
@@ -194,37 +262,17 @@ public class MonkeyBSGame : MonoBehaviour
         {
             GameOver();
         }
-        else
-        {
-            StartCoroutine(FlashCaughtWarning());
-        }
     }
 
     void GameOver()
     {
-        BSGameLogic.instance.EndGame();
+        if (BSGameLogic.instance != null && BSGameLogic.instance)
+        {
+            BSGameLogic.instance.EndGame();
+        }
+        
         gameOver = true;
         Debug.Log($"=== GAME OVER === Final Score: {score} | You got {maxStrikes} strikes!");
-        
-        foreach (var monkey in monkeys)
-        {
-            monkey.monkeyRenderer.material.color = Color.red;
-        }
-    }
-
-    IEnumerator FlashCaughtWarning()
-    {
-        foreach (var monkey in monkeys)
-        {
-            monkey.monkeyRenderer.material.color = Color.red;
-        }
-
-        yield return new WaitForSeconds(0.3f);
-
-        foreach (var monkey in monkeys)
-        {
-            monkey.monkeyRenderer.material.color = monkey.isLookingAway ? lookingAwayColor : lookingColor;
-        }
     }
 
     public int GetStrikes()
@@ -252,10 +300,11 @@ public class MonkeyBSGame : MonoBehaviour
         // 3. Reset all monkeys to their starting state
         foreach (var monkey in monkeys)
         {
-            if (monkey.monkeyRenderer != null)
+            if (monkey != null && monkey.monkeyObject != null)
             {
                 monkey.isLookingAway = false;
-                monkey.monkeyRenderer.material.color = lookingColor;
+                // Reset rotation
+                monkey.monkeyObject.transform.rotation = monkey.originalRotation;
             }
         }
 
