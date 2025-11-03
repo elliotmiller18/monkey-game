@@ -31,6 +31,7 @@ public class BSAICheat : MonoBehaviour
 
     void Awake()
     {
+        Debug.Log($"[BSAICheat] Awake called! instance={instance}, this={this}");
         if (instance != null && instance != this)
         {
             Destroy(gameObject);
@@ -73,6 +74,9 @@ public class BSAICheat : MonoBehaviour
 
     public void StopPeekSystem()
     {
+        Debug.Log($"[PEEK SYSTEM] StopPeekSystem CALLED!");
+        Debug.Log($"[PEEK SYSTEM] Called from: {System.Environment.StackTrace}");
+        
         gameActive = false;
         StopAllCoroutines();
         
@@ -84,22 +88,32 @@ public class BSAICheat : MonoBehaviour
 
     IEnumerator MonkeyPeekAttemptRoutine()
     {
+        Debug.Log("=== MonkeyPeekAttemptRoutine STARTED ===");
+        
         while (gameActive)
         {
             // Wait random time before next peek attempt
-            int secondsToWait = Random.Range((int)minPeekInterval, (int)maxPeekInterval);
-            Debug.Log($"Next monkey peek attempt in {secondsToWait} seconds");
-            yield return new WaitForSeconds(secondsToWait);
-        
+            float waitTime = Random.Range(minPeekInterval, maxPeekInterval);
+            Debug.Log($"[PEEK] Waiting {waitTime:F1} seconds until next peek attempt");
+            yield return new WaitForSeconds(waitTime);
+            
+            Debug.Log($"[PEEK] Wait finished! gameActive={gameActive}, isDeflecting={isDeflecting}");
             
             // Don't interrupt if already deflecting
             if (!isDeflecting)
             {
-                // Pick random monkey (1, 2, 4, or 3)
+                // Pick random monkey (1, 2, 3, or 4)
                 int randomMonkey = Random.Range(1, 5);
+                Debug.Log($"[PEEK] Starting minigame with Monkey {randomMonkey}");
                 StartDeflectMinigame(randomMonkey);
             }
+            else
+            {
+                Debug.Log($"[PEEK] Skipped peek because isDeflecting={isDeflecting}");
+            }
         }
+        
+        Debug.Log("=== MonkeyPeekAttemptRoutine ENDED ===");
     }
 
     void StartDeflectMinigame(int monkeyIndex)

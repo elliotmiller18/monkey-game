@@ -3556,7 +3556,7 @@ MonoBehaviour:
   timerDuration: 5
   timerObject: {fileID: 0}
   timerText: {fileID: 0}
-  timerFillImage: {fileID: 0}
+  timerFillImage: {fileID: 1674254767}
 --- !u!4 &1742725928
 Transform:
   m_ObjectHideFlags: 0

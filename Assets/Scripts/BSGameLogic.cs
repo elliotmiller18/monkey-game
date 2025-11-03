@@ -120,9 +120,11 @@ public class BSGameLogic : MonoBehaviour
             BSAIController.instance.InitializeAI(numPlayers, hands);
         }
         
+            // START THE PEEK SYSTEM - REPLACE THE OLD CODE WITH THIS:
         if (BSAICheat.instance != null)
         {
-            BSAICheat.instance.StartPeekSystem();
+            BSAICheat.instance.StopPeekSystem();  // Stop old one first
+            BSAICheat.instance.StartPeekSystem(); // Then start fresh
         }
         
         HandManager.instance.RenderCards(hands[humanPlayerIndex]);
