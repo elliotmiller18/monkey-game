@@ -1,0 +1,1 @@
+We received a lot of feedback regarding the guidance through the game as well as how as of last week, our game just seemed like a implementation of a card game (which it was as that was our gold spike). This week we added more instructions as well as other mechanics that differentiated this game from a normal card game. We also added better graphics. 
