@@ -51,8 +51,8 @@ public class BSGameLogic : MonoBehaviour
 
     void Start()
     {
-        //TODO: make this dynamic for game regeneration with varying # of monkeys, it'll just be 5 for now
-        int numPlayers = 5;
+        // + 1 for player
+        int numPlayers = MonkeyObjects.NumMonkeys() + 1;
         StartGame(numPlayers);
     }
 
@@ -78,14 +78,34 @@ public class BSGameLogic : MonoBehaviour
 
     public List<Card> GetHand(int id)
     {
-        // id 0 is the player
         return hands[id];
+    }
+
+    public List<Card> GetMonkeyHand(int monkeyId)
+    {
+        // id 0 is the player
+        return hands[monkeyId + 1];
+    }
+
+    void InstanceAssertions()
+    {
+        Assert.IsNotNull(LastPlayed.instance, "LastPlayed instance is null");
+        Assert.IsNotNull(Pile.instance, "Pile instance is null");
+        Assert.IsNotNull(BSAICheat.instance, "BSAICheat instance is null");
+        Assert.IsNotNull(BSAIController.instance, "BSAIController instance is null");
+        Assert.IsNotNull(HandManager.instance, "HandManager instance is null");
+        Assert.IsNotNull(TurnTimer.instance, "TurnTimer instance is null");
+        Assert.IsNotNull(MonkeyBSGame.instance, "MonkeyBSGame instance is null");
+        Assert.IsNotNull(CallArrow.instance, "CallArrow instance is null");
+        Assert.IsNotNull(CallAudio.instance, "CallAudio instance is null");
     }
 
     // start game, so divide the deck among each player
     public void StartGame(int numPlayers)
     {
         Assert.AreEqual(state, GameState.Inactive, "Trying to start a game while one is active");
+        // assert that all of the instances we use aren't null 
+        InstanceAssertions();
 
         ResetGameButton.SetActive(false);
 
@@ -116,15 +136,8 @@ public class BSGameLogic : MonoBehaviour
 
         state = GameState.WaitingForPlay;
         
-        if (BSAIController.instance != null)
-        {
-            BSAIController.instance.InitializeAI(numPlayers, hands);
-        }
-        
-        if (BSAICheat.instance != null)
-        {
-            BSAICheat.instance.StartPeekSystem();
-        }
+        BSAIController.instance.InitializeAI(numPlayers, hands);
+        BSAICheat.instance.StartPeekSystem();
         
         HandManager.instance.RenderCards(hands[humanPlayerIndex]);
         MonkeyBSGame.instance.RestartGame();
@@ -155,11 +168,7 @@ public class BSGameLogic : MonoBehaviour
             hands[currentPlayer].Remove(c);
             pile.Add(c);
             
-            // NEW: Update AI knowledge
-            if (BSAIController.instance != null)
-            {
-                BSAIController.instance.OnCardPlayed(currentPlayer, c);
-            }
+            BSAIController.instance.OnCardPlayed(currentPlayer, c);
         }
 
         if (currentPlayer == humanPlayerIndex) HandManager.instance.RenderCards(hands[humanPlayerIndex]);
@@ -167,15 +176,9 @@ public class BSGameLogic : MonoBehaviour
         LastPlayed.instance.UpdateText(currentPlayer, played.Count, expectedRank);
         Pile.instance.AddCards(played.Count);
 
-        if (BSAIController.instance != null)
-        {
-            BSAIController.instance.TrackPlay(expectedRank, lastPlayedCount, hands);
-        }
+        BSAIController.instance.TrackPlay(expectedRank, lastPlayedCount, hands);
 
-        if (TurnTimer.instance != null)
-        {
-            TurnTimer.instance.StartTimer();
-        }
+        TurnTimer.instance.StartTimer();
     }
 
     // call
@@ -186,10 +189,7 @@ public class BSGameLogic : MonoBehaviour
         Assert.IsTrue(state == GameState.LieTold || state == GameState.TruthTold, "Trying to call while waiting for turn or game is inactive");
 
         // Stop the timer when BS is called
-        if (TurnTimer.instance != null)
-        {
-            TurnTimer.instance.StopTimer();
-        }
+        TurnTimer.instance.StopTimer();
 
         bool successful = state == GameState.LieTold;
 
@@ -209,21 +209,9 @@ public class BSGameLogic : MonoBehaviour
         Assert.IsTrue(state == GameState.LieTold || state == GameState.TruthTold, "Trying to continue while waiting for a turn or game is inactive");
 
         // Stop the timer when continuing
-        if (TurnTimer.instance != null)
-        {
-            TurnTimer.instance.StopTimer();
-        }
+        TurnTimer.instance.StopTimer();
 
-        // Give AI a chance to call BS before continuing
-        if (BSAIController.instance != null)
-        {
-            StartCoroutine(ContinueWithAICheck());
-        }
-        else
-        {
-            // No AI, just continue immediately
-            AdvanceToNextTurn();
-        }
+        StartCoroutine(ContinueWithAICheck());
     }
 
     System.Collections.IEnumerator ContinueWithAICheck()
@@ -264,11 +252,8 @@ public class BSGameLogic : MonoBehaviour
         {
             HandManager.instance.RenderCards(hands[humanPlayerIndex]);
         }
-        
-        if (BSAIController.instance != null)
-        {
-            BSAIController.instance.OnPilePickedUp(victim, hands[victim]);
-        }
+    
+        BSAIController.instance.OnPilePickedUp(victim, hands[victim]);
         
         pile.Clear();
         Pile.instance.ClearPile();

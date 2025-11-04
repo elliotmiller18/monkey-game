@@ -109,20 +109,41 @@ public static class CardUtils
     {
         switch (r)
         {
-            case CardRank.Ace:   return "A";
-            case CardRank.Two:   return "2";
+            case CardRank.Ace: return "A";
+            case CardRank.Two: return "2";
             case CardRank.Three: return "3";
-            case CardRank.Four:  return "4";
-            case CardRank.Five:  return "5";
-            case CardRank.Six:   return "6";
+            case CardRank.Four: return "4";
+            case CardRank.Five: return "5";
+            case CardRank.Six: return "6";
             case CardRank.Seven: return "7";
             case CardRank.Eight: return "8";
-            case CardRank.Nine:  return "9";
-            case CardRank.Ten:   return "10";
-            case CardRank.Jack:  return "J";
+            case CardRank.Nine: return "9";
+            case CardRank.Ten: return "10";
+            case CardRank.Jack: return "J";
             case CardRank.Queen: return "Q";
-            case CardRank.King:  return "K";
+            case CardRank.King: return "K";
             default: return r.ToString();
+        }
+    }
+    
+    public static CardRank StringToRank(string cardStr)
+    {
+        switch(cardStr)
+        {
+            case "A": return CardRank.Ace;
+            case "2": return CardRank.Two;
+            case "3": return CardRank.Three;
+            case "4": return CardRank.Four;
+            case "5": return CardRank.Five;
+            case "6": return CardRank.Six;
+            case "7": return CardRank.Seven;
+            case "8": return CardRank.Eight;
+            case "9": return CardRank.Nine;
+            case "10": return CardRank.Ten;
+            case "J": return CardRank.Jack;
+            case "Q": return CardRank.Queen;
+            case "K": return CardRank.King;
+            default: return CardRank.Ace;
         }
     }
 }

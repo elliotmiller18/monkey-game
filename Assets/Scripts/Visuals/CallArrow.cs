@@ -22,31 +22,13 @@ public class CallArrow : MonoBehaviour
             return;
         }
         instance = this;
-        
-        // Initialize with just human for now
-        playerTransforms = new List<Transform>();
-        if (humanTransform != null)
-        {
-            playerTransforms.Add(humanTransform);
-        }
-        else
-        {
-            Debug.LogError("CallArrow: humanTransform is not assigned!");
-        }
-    }
 
+    }
+    
     void Start()
     {
-        // Add monkeys after Awake has run for all objects
-        if (MonkeyObjects.monkeys != null && MonkeyObjects.monkeys.Count > 0)
-        {
-            playerTransforms.AddRange(MonkeyObjects.monkeys.ConvertAll(g => g.transform));
-            Debug.Log($"CallArrow: Added {MonkeyObjects.monkeys.Count} monkeys. Total players: {playerTransforms.Count}");
-        }
-        else
-        {
-            Debug.LogError("CallArrow: MonkeyObjects.monkeys is null or empty! Make sure MonkeyObjects exists in the scene.");
-        }
+        playerTransforms = new List<Transform> { humanTransform };
+        playerTransforms.AddRange(MonkeyObjects.monkeys.ConvertAll(g => g.transform));
     }
 
     public void DrawArrow(int callerId, int victimId, bool successful)
