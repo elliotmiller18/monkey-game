@@ -80,7 +80,7 @@ public class GameManager : MonoBehaviour
     public System.Action<string> OnGameMessage;
     public System.Action<List<Card>> OnPlayerHandUpdated;
     public System.Action<int> OnPlayerTurnChanged;
-    public System.Action OnGameEnded;
+    public System.Action<Player> OnGameEnded; // Pass winner to UI
 
     void Start()
     {
@@ -135,7 +135,11 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
-        if (gameInProgress && !waitingForPlayerAction)
+        // Don't process turns if game is over
+        if (!gameInProgress)
+            return;
+            
+        if (!waitingForPlayerAction)
         {
             if (players[currentPlayerIndex].isHuman)
             {
@@ -177,6 +181,13 @@ public class GameManager : MonoBehaviour
         discardPile.AddRange(cards);
         
         OnGameMessage?.Invoke($"You played {cards.Count} card(s) claiming {claimedRank}.");
+        
+        // Check if player won
+        if (players[0].IsOut())
+        {
+            EndGame(players[0]);
+            return;
+        }
         
         // Advance to next rank after player plays cards
         AdvanceToNextRank();
@@ -255,10 +266,11 @@ public class GameManager : MonoBehaviour
         }
     }
 
-
-
     void PlayAITurn()
     {
+        if (!gameInProgress)
+            return;
+            
         Player aiPlayer = players[currentPlayerIndex];
         
         // AI logic - must play the current required rank
@@ -302,6 +314,13 @@ public class GameManager : MonoBehaviour
             OnGameMessage?.Invoke($"{aiPlayer.name} played {bluffCards.Count} card(s) claiming {currentClaim} (bluffing).");
         }
         
+        // Check if AI won
+        if (aiPlayer.IsOut())
+        {
+            EndGame(aiPlayer);
+            return;
+        }
+        
         // Advance to next rank after AI plays cards
         AdvanceToNextRank();
         
@@ -312,6 +331,10 @@ public class GameManager : MonoBehaviour
 
     void NextTurn()
     {
+        // Don't advance turns if game is over
+        if (!gameInProgress)
+            return;
+            
         // Check for game end
         foreach (Player player in players)
         {
@@ -384,8 +407,25 @@ public class GameManager : MonoBehaviour
     void EndGame(Player winner)
     {
         gameInProgress = false;
+        waitingForPlayerAction = false; // Stop accepting input
+        
         OnGameMessage?.Invoke($"Game Over! {winner.name} wins!");
-        OnGameEnded?.Invoke();
+        OnGameEnded?.Invoke(winner); // Pass winner to UI for game over screen
+        
+        Debug.Log($"=== GAME OVER === Winner: {winner.name}");
+    }
+
+    public void RestartGame()
+    {
+        // Reset all state
+        lastPlayedCards = null;
+        lastClaimedRank = CardRank.Ace;
+        lastPlayerIndex = -1;
+        
+        // Reinitialize the game
+        InitializeGame();
+        
+        Debug.Log("Game restarted");
     }
 
     // Utility methods for UI
@@ -417,6 +457,11 @@ public class GameManager : MonoBehaviour
 
     public bool IsPlayerTurn()
     {
-        return currentPlayerIndex == 0 && waitingForPlayerAction;
+        return gameInProgress && currentPlayerIndex == 0 && waitingForPlayerAction;
+    }
+    
+    public bool IsGameOver()
+    {
+        return !gameInProgress;
     }
 }

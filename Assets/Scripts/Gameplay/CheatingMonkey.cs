@@ -58,14 +58,12 @@ public class MonkeyBSGame : MonoBehaviour
 
     void Start()
     {
-        // Check if monkeys list is empty
         if (monkeys == null || monkeys.Count == 0)
         {
             Debug.LogError("No monkeys assigned! Add monkeys to the list in the Inspector.");
             return;
         }
 
-        // Remove any null entries and validate
         monkeys.RemoveAll(m => m == null || m.monkeyObject == null);
 
         if (monkeys.Count == 0)
@@ -84,15 +82,12 @@ public class MonkeyBSGame : MonoBehaviour
             {
                 monkey.cards = new string[] { "A♠", "K♥", "3♦" };
             }
-            
-            Debug.Log($"Monkey {i} ({monkey.monkeyObject.name}) initialized successfully");
         }
 
         strikes = 0;
         gameOver = false;
 
         StartCoroutine(RandomLookAwayRoutine());
-        Debug.Log($"Starting game! Score: {score} | Strikes: {strikes}/{maxStrikes}");
     }
 
     void Update()
@@ -130,11 +125,9 @@ public class MonkeyBSGame : MonoBehaviour
 
         monkey.isLookingAway = true;
         
-        // Randomly choose left or right rotation
         float direction = Random.value > 0.5f ? 1f : -1f;
         Quaternion targetRotation = monkey.originalRotation * Quaternion.Euler(0, rotationDegrees * direction, 0);
         
-        // Smoothly rotate to look away
         float elapsed = 0;
         Quaternion startRotation = monkey.monkeyObject.transform.rotation;
         while (elapsed < 1f / rotationSpeed)
@@ -156,7 +149,6 @@ public class MonkeyBSGame : MonoBehaviour
 
         if (monkey.monkeyObject == null) yield break; // Safety check
 
-        // Smoothly rotate back to original position
         elapsed = 0;
         startRotation = monkey.monkeyObject.transform.rotation;
         while (elapsed < 1f / rotationSpeed)
@@ -188,7 +180,6 @@ public class MonkeyBSGame : MonoBehaviour
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
 
-            // Raycast against everything EXCEPT the table layer
             int ignoreTableLayer = ~(1 << LayerMask.NameToLayer("Table")); // Ignores "Table" layer
         
             if (Physics.Raycast(ray, out hit, Mathf.Infinity, ignoreTableLayer))
@@ -223,7 +214,6 @@ public class MonkeyBSGame : MonoBehaviour
         isPeeking = true;
         currentlyPeekingAt = monkeys[monkeyIndex];
 
-        // Check if TurnIndicator exists and isn't destroyed
         if (TurnIndicator.instance != null && TurnIndicator.instance)
         {
             TurnIndicator.instance.RevealCard(monkeyIndex);
@@ -261,8 +251,6 @@ public class MonkeyBSGame : MonoBehaviour
     void CaughtCheating()
     {
         strikes++;
-        Debug.Log($"CAUGHT CHEATING! Strike added. Strikes: {strikes}/{maxStrikes}");
-        
         isPeeking = false;
         currentlyPeekingAt = null;
 
@@ -278,9 +266,7 @@ public class MonkeyBSGame : MonoBehaviour
         {
             BSGameLogic.instance.EndGame();
         }
-        
         gameOver = true;
-        Debug.Log($"=== GAME OVER === Final Score: {score} | You got {maxStrikes} strikes!");
     }
 
     public int GetStrikes()
@@ -295,31 +281,23 @@ public class MonkeyBSGame : MonoBehaviour
 
     public void RestartGame()
     {
-        // 1. Stop all active coroutines (RandomLookAwayRoutine, MonkeyLookAway, etc.)
         StopAllCoroutines();
-
-        // 2. Reset game state variables
         score = 0;
         strikes = 0;
         gameOver = false;
         isPeeking = false;
         currentlyPeekingAt = null;
 
-        // 3. Reset all monkeys to their starting state
         foreach (var monkey in monkeys)
         {
             if (monkey != null && monkey.monkeyObject != null)
             {
                 monkey.isLookingAway = false;
-                // Reset rotation
                 monkey.monkeyObject.transform.rotation = monkey.originalRotation;
             }
         }
 
-        // 5. Start the main coroutine again
         StartCoroutine(RandomLookAwayRoutine());
-        
-        Debug.Log($"--- GAME RESTARTED --- Score: {score} | Strikes: {strikes}/{maxStrikes}");
     }
     
     public void PlayCardAnimation(int monkeyIndex)

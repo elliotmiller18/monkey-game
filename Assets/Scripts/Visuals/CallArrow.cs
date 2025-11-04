@@ -23,8 +23,30 @@ public class CallArrow : MonoBehaviour
         }
         instance = this;
         
-        playerTransforms = new List<Transform> { humanTransform };
-        playerTransforms.AddRange(MonkeyObjects.monkeys.ConvertAll(g => g.transform));
+        // Initialize with just human for now
+        playerTransforms = new List<Transform>();
+        if (humanTransform != null)
+        {
+            playerTransforms.Add(humanTransform);
+        }
+        else
+        {
+            Debug.LogError("CallArrow: humanTransform is not assigned!");
+        }
+    }
+
+    void Start()
+    {
+        // Add monkeys after Awake has run for all objects
+        if (MonkeyObjects.monkeys != null && MonkeyObjects.monkeys.Count > 0)
+        {
+            playerTransforms.AddRange(MonkeyObjects.monkeys.ConvertAll(g => g.transform));
+            Debug.Log($"CallArrow: Added {MonkeyObjects.monkeys.Count} monkeys. Total players: {playerTransforms.Count}");
+        }
+        else
+        {
+            Debug.LogError("CallArrow: MonkeyObjects.monkeys is null or empty! Make sure MonkeyObjects exists in the scene.");
+        }
     }
 
     public void DrawArrow(int callerId, int victimId, bool successful)
@@ -38,13 +60,13 @@ public class CallArrow : MonoBehaviour
 
         if (callerId < 0 || callerId >= playerTransforms.Count)
         {
-            Debug.LogError($"Invalid callerId {callerId}. Must be between 0 and {playerTransforms.Count - 1}");
+            Debug.LogError($"Invalid callerId {callerId}. Must be between 0 and {playerTransforms.Count - 1}. Total players: {playerTransforms.Count}");
             return;
         }
 
         if (victimId < 0 || victimId >= playerTransforms.Count)
         {
-            Debug.LogError($"Invalid victimId {victimId}. Must be between 0 and {playerTransforms.Count - 1}");
+            Debug.LogError($"Invalid victimId {victimId}. Must be between 0 and {playerTransforms.Count - 1}. Total players: {playerTransforms.Count}");
             return;
         }
 

@@ -7,24 +7,26 @@ using TMPro;
 public class BSAICheat : MonoBehaviour
 {
     [Header("Deflect UI")]
-    public GameObject deflectUI; // Parent panel for the deflect minigame
-    public TextMeshProUGUI alertText; // Text showing "[Monkey] is trying to peek!"
-    public Image fillCircle; // The circle fill meter (use Image with Fill Type: Radial 360)
-    public Button clickButton; // The clickable circle button
-    public TextMeshProUGUI resultText; // Shows "DEFLECTED!" or "THEY SAW YOUR CARDS!"
+    public GameObject deflectUI;
+    public TextMeshProUGUI alertText;
+    public Image fillCircle;
+    public Button clickButton; 
+    public TextMeshProUGUI resultText;
     
     [Header("Deflect Settings")]
-    public float deflectTimeLimit = 3f; // Seconds player has to fill the circle
-    public int clicksNeeded = 15; // Number of clicks needed to deflect
-    public float minPeekInterval = 45f; // Minimum time between peek attempts
-    public float maxPeekInterval = 120f; // Maximum time between peek attempts
+    public float deflectTimeLimit = 3f; 
+    public int clicksNeeded = 15;
+    public float minPeekInterval = 10f;
+    public float maxPeekInterval = 15f;
+    public float minResultDisplayTime = 2f;
+    public bool autoStart = true;
     
     [Header("Scoring")]
     public int deflectSuccessPoints = 10;
     private int currentClicks;
     private float deflectTimer;
     private bool isDeflecting;
-    private int peekingMonkeyIndex; // Which monkey is peeking (1-3)
+    private int peekingMonkeyIndex;
     private bool gameActive;
 
     public static BSAICheat instance;
@@ -48,14 +50,24 @@ public class BSAICheat : MonoBehaviour
             clickButton.onClick.AddListener(OnDeflectClick);
         
         gameActive = false;
+        
+        if (autoStart)
+        {
+            Debug.Log("BSAICheat: Auto-starting peek system");
+            StartPeekSystem();
+        }
     }
 
     void Update()
     {
-        // Handle deflect minigame timer
         if (isDeflecting)
         {
             deflectTimer -= Time.deltaTime;
+            
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                OnDeflectClick();
+            }
             
             if (deflectTimer <= 0)
             {
@@ -66,13 +78,20 @@ public class BSAICheat : MonoBehaviour
 
     public void StartPeekSystem()
     {
+        if (gameActive)
+        {
+            Debug.LogWarning("BSAICheat: Peek system already active!");
+            return;
+        }
+        
         gameActive = true;
+        Debug.Log("BSAICheat: Starting peek system");
         StartCoroutine(MonkeyPeekAttemptRoutine());
     }
 
     public void StopPeekSystem()
     {
-        Debug.Log("Stopping peek system");
+        Debug.Log("BSAICheat: Stopping peek system");
         gameActive = false;
         StopAllCoroutines();
         
@@ -84,24 +103,34 @@ public class BSAICheat : MonoBehaviour
 
     IEnumerator MonkeyPeekAttemptRoutine()
     {
-        Debug.Log("Starting monkey peek attempt routine");
-        Debug.Log("gameactive: " + gameActive);
         while (gameActive)
         {
-            // Wait random time before next peek attempt
-            int secondsToWait = Random.Range((int)minPeekInterval, (int)maxPeekInterval);
-            Debug.Log($"Next monkey peek attempt in {secondsToWait} seconds");
+            float secondsToWait = Random.Range(minPeekInterval, maxPeekInterval);
+            Debug.Log($"BSAICheat: Next monkey peek attempt in {secondsToWait:F1} seconds");
             yield return new WaitForSeconds(secondsToWait);
         
-            Debug.Log("isDeflecting: " + isDeflecting);
-            // Don't interrupt if already deflecting
-            if (!isDeflecting)
+            if (!isDeflecting && gameActive) 
             {
-                // Pick random monkey (1, 2, 4, or 3)
                 int randomMonkey = Random.Range(1, 5);
-                StartDeflectMinigame(randomMonkey);
+                
+                if (BSAIController.instance != null && BSAIController.instance.CanMonkeyCheat(randomMonkey))
+                {
+                    Debug.Log($"BSAICheat: Monkey {randomMonkey} attempting to peek!");
+                    StartDeflectMinigame(randomMonkey);
+                    
+                    while (isDeflecting)
+                    {
+                        yield return null;
+                    }
+                }
+                else
+                {
+                    Debug.Log($"BSAICheat: Monkey {randomMonkey} is on cooldown, skipping peek attempt");
+                }
             }
         }
+        
+        Debug.Log("BSAICheat: Peek routine ended");
     }
 
     void StartDeflectMinigame(int monkeyIndex)
@@ -111,13 +140,12 @@ public class BSAICheat : MonoBehaviour
         currentClicks = 0;
         deflectTimer = deflectTimeLimit;
         
-        // Show UI
         if (deflectUI != null)
             deflectUI.SetActive(true);
         
         if (alertText != null)
         {
-            alertText.text = $"Monkey {monkeyIndex} is trying to peek!";
+            alertText.text = $"Monkey {monkeyIndex} is trying to peek!\nPress SPACE {clicksNeeded} times!";
         }
         
         if (fillCircle != null)
@@ -126,7 +154,7 @@ public class BSAICheat : MonoBehaviour
         if (resultText != null)
             resultText.text = "";
         
-        Debug.Log($"Monkey {monkeyIndex} is trying to peek! Click the circle {clicksNeeded} times in {deflectTimeLimit} seconds!");
+        Debug.Log($"BSAICheat: Monkey {monkeyIndex} is trying to peek! Press SPACE {clicksNeeded} times in {deflectTimeLimit} seconds!");
     }
 
     void OnDeflectClick()
@@ -136,11 +164,11 @@ public class BSAICheat : MonoBehaviour
         
         currentClicks++;
         
-        // Update fill circle
         if (fillCircle != null)
             fillCircle.fillAmount = (float)currentClicks / clicksNeeded;
         
-        // Check if deflected successfully
+        Debug.Log($"BSAICheat: Click {currentClicks}/{clicksNeeded}");
+        
         if (currentClicks >= clicksNeeded)
         {
             DeflectSuccess();
@@ -149,12 +177,12 @@ public class BSAICheat : MonoBehaviour
 
     void DeflectSuccess()
     {
+        Debug.Log("BSAICheat: Deflect SUCCESS!");
         isDeflecting = false;
         
         if (resultText != null)
             resultText.text = "DEFLECTED!";
         
-        // Generate 3 random fake cards
         string[] allRanks = { "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K" };
         string[] fakeCards = new string[3];
         for (int i = 0; i < 3; i++)
@@ -162,57 +190,58 @@ public class BSAICheat : MonoBehaviour
             fakeCards[i] = allRanks[Random.Range(0, allRanks.Length)];
         }
         
-        Debug.Log($"DEFLECTED! Monkey {peekingMonkeyIndex} now thinks you have: {string.Join(", ", fakeCards)}");
+        Debug.Log($"BSAICheat: DEFLECTED! Monkey {peekingMonkeyIndex} now thinks you have: {string.Join(", ", fakeCards)}");
         
-        // Send fake cards to AI
-        BSAIController.instance.MonkeyPeekedAtHuman(peekingMonkeyIndex, fakeCards, false);
+        if (BSAIController.instance != null)
+        {
+            BSAIController.instance.MonkeyPeekedAtHuman(peekingMonkeyIndex, fakeCards, false);
+        }
         
-        // Add points (you might want to integrate this with your scoring system)
-        Debug.Log($"Deflect bonus! +{deflectSuccessPoints} points");
+        Debug.Log($"BSAICheat: Deflect bonus! +{deflectSuccessPoints} points");
 
         StartCoroutine(HideDeflectUI());
     }
 
     void DeflectFailed()
     {
-        Debug.Log("Deflect failed!");
+        Debug.Log("BSAICheat: Deflect FAILED!");
         isDeflecting = false;
         
         if (resultText != null)
             resultText.text = "THEY SAW YOUR CARDS!";
         
-        // Get player's real cards from BSGameLogic
+        if (BSGameLogic.instance == null)
+        {
+            Debug.LogError("BSAICheat: BSGameLogic.instance is null!");
+            StartCoroutine(HideDeflectUI());
+            return;
+        }
+        
         List<Card> humanHand = BSGameLogic.instance.GetHand(BSGameLogic.humanPlayerIndex);
         
-        // Convert to string array of ranks
         string[] realCards = new string[humanHand.Count];
         for (int i = 0; i < humanHand.Count; i++)
         {
             realCards[i] = GetRankString(humanHand[i].rank);
         }
         
-        Debug.Log($"FAILED TO DEFLECT! Monkey {peekingMonkeyIndex} saw your real cards: {string.Join(", ", realCards)}");
+        Debug.Log($"BSAICheat: FAILED TO DEFLECT! Monkey {peekingMonkeyIndex} saw your real cards: {string.Join(", ", realCards)}");
         
-        // Send real cards to AI
-        BSAIController.instance.MonkeyPeekedAtHuman(peekingMonkeyIndex, realCards, true);
+        if (BSAIController.instance != null)
+        {
+            BSAIController.instance.MonkeyPeekedAtHuman(peekingMonkeyIndex, realCards, true);
+            BSAIController.instance.OnMonkeyCheatUsed(peekingMonkeyIndex);
+        }
 
         StartCoroutine(HideDeflectUI());
-        
     }
 
     IEnumerator HideDeflectUI()
     {
-        yield return new WaitForSeconds(1.5f);
+        yield return new WaitForSeconds(minResultDisplayTime);
 
         if (deflectUI != null)
             deflectUI.SetActive(false);
-        Debug.Log("gameActive: " + gameActive);
-        Debug.Log("isDeflecting: " + isDeflecting);
-        if (!isDeflecting)
-        {
-            Debug.Log("[PeekSystem] Resuming peek loop");
-            StartPeekSystem();
-        }
     }
 
     string GetRankString(CardRank rank)
