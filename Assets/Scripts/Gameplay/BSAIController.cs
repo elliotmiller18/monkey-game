@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Assertions;
 
 public class BSAIController : MonoBehaviour
 {
@@ -10,22 +9,26 @@ public class BSAIController : MonoBehaviour
     [SerializeField] float aiCallDelayMax = 2.0f;
     
     [Header("Cheat Cooldown Settings")]
-    [SerializeField] int minTurnsBetweenCheats = 2; // Minimum turns before same monkey can cheat again
-    [SerializeField] int globalCheatCooldown = 1; // Minimum turns before ANY monkey can cheat after a cheat
+    [SerializeField] int minTurnsBetweenCheats = 2; 
+    [SerializeField] int globalCheatCooldown = 1;
     
     private List<Dictionary<CardRank, int>> aiKnowledge;
     private int numPlayers;
     private CardRank lastExpectedRank;
     private int lastCardsPlayed;
+    private List<List<Card>> currentHands;
 
     public static BSAIController instance;
+    
+    private Dictionary<int, int> lastCheatTurn = new Dictionary<int, int>();
+    private int lastGlobalCheatTurn = -999; 
+    private int currentTurnNumber = 0;
 
     void Awake()
     {
         if (instance != null && instance != this)
         {
             Destroy(gameObject);
-            Debug.LogError("duplicate BSAIController, destroying");
             return;
         }
         instance = this;
@@ -35,11 +38,15 @@ public class BSAIController : MonoBehaviour
     {
         numPlayers = playerCount;
         aiKnowledge = new List<Dictionary<CardRank, int>>();
-
+        lastCheatTurn.Clear();
+        lastGlobalCheatTurn = -999;
+        currentTurnNumber = 0;
+        
         for (int i = 0; i < numPlayers; i++)
         {
             aiKnowledge.Add(new Dictionary<CardRank, int>());
-
+            lastCheatTurn[i] = -999;
+            
             if (i != BSGameLogic.humanPlayerIndex)
             {
                 foreach (Card card in hands[i])
@@ -81,25 +88,61 @@ public class BSAIController : MonoBehaviour
     {
         lastExpectedRank = expectedRank;
         lastCardsPlayed = cardsPlayed;
+        currentHands = hands;
+        currentTurnNumber++;
+    }
+
+    public void OnMonkeyCheatUsed(int monkeyIndex)
+    {
+        lastCheatTurn[monkeyIndex] = currentTurnNumber;
+        lastGlobalCheatTurn = currentTurnNumber;
+        Debug.Log($"Monkey {monkeyIndex} cheated on turn {currentTurnNumber}");
+    }
+
+    public bool CanMonkeyCheat(int monkeyIndex)
+    {
+        if (lastCheatTurn.ContainsKey(monkeyIndex))
+        {
+            int turnsSinceLastCheat = currentTurnNumber - lastCheatTurn[monkeyIndex];
+            if (turnsSinceLastCheat < minTurnsBetweenCheats)
+            {
+                Debug.Log($"Monkey {monkeyIndex} on individual cooldown ({turnsSinceLastCheat}/{minTurnsBetweenCheats} turns)");
+                return false;
+            }
+        }
+        
+        int turnsSinceAnyCheat = currentTurnNumber - lastGlobalCheatTurn;
+        if (turnsSinceAnyCheat < globalCheatCooldown)
+        {
+            Debug.Log($"Global cheat cooldown active ({turnsSinceAnyCheat}/{globalCheatCooldown} turns)");
+            return false;
+        }
+        
+        return true;
     }
 
     public System.Collections.IEnumerator CheckForAICalls()
     {
         int currentPlayer = BSGameLogic.instance.GetPlayer();
         GameState state = BSGameLogic.instance.GetState();
-
+        
         if (state != GameState.TruthTold && state != GameState.LieTold)
         {
             yield break;
         }
-
+        
+        if (currentHands == null)
+        {
+            yield break;
+        }
+        
         for (int i = 0; i < numPlayers; i++)
         {
             if (i == currentPlayer || i == BSGameLogic.humanPlayerIndex)
             {
                 continue;
             }
-
+            
             if (ShouldAICallSimple(i, currentPlayer))
             {
                 Debug.Log($"*** AI Player {i} CALLS BS on Player {currentPlayer}! ***");
@@ -111,15 +154,15 @@ public class BSAIController : MonoBehaviour
     
     public float GetMonkeySuspicion(int monkeyIndex, CardRank expectedRank, int cardsPlayed)
     {
-        return GetCallProbability(monkeyIndex + 1, BSGameLogic.humanPlayerIndex, expectedRank, cardsPlayed);
+        return GetCallProbability(monkeyIndex, BSGameLogic.humanPlayerIndex, expectedRank, cardsPlayed);
     }
 
     bool ShouldAICallSimple(int aiPlayer, int targetPlayer)
     {
-        return ShouldAICall(aiPlayer, targetPlayer, lastExpectedRank, lastCardsPlayed);
+        return ShouldAICall(aiPlayer, targetPlayer, lastExpectedRank, lastCardsPlayed, currentHands);
     }
 
-    bool ShouldAICall(int aiPlayer, int targetPlayer, CardRank expectedRank, int cardsPlayed)
+    bool ShouldAICall(int aiPlayer, int targetPlayer, CardRank expectedRank, int cardsPlayed, List<List<Card>> hands)
     {
         float randomRoll = Random.value;
         bool willCall = randomRoll < GetCallProbability(aiPlayer, targetPlayer, expectedRank, cardsPlayed);
@@ -144,7 +187,16 @@ public class BSAIController : MonoBehaviour
             case 4: baseProbability = 0.60f; break;
         }
 
-        int targetHandSize = BSGameLogic.instance.GetHand(targetPlayer).Count;
+        int targetHandSize;
+        if (currentHands != null && targetPlayer < currentHands.Count)
+        {
+            targetHandSize = currentHands[targetPlayer].Count;
+        }
+        else
+        {
+            targetHandSize = BSGameLogic.instance.GetHand(targetPlayer).Count;
+        }
+
         float handSizeMultiplier = 1.0f;
 
         if (targetHandSize <= 3)
@@ -168,12 +220,12 @@ public class BSAIController : MonoBehaviour
     
     public void MonkeyPeekedAtHuman(int monkeyIndex, string[] peekedCards, bool isRealData)
     {
-        if(!isRealData)
+        if (!isRealData)
         {
-            Debug.Log($"Monkey {monkeyIndex} was given false info, just returning :D");
+            Debug.Log($"Monkey {monkeyIndex} was given false info (deflected), ignoring peek data");
             return;
         }
-        // Store the peeked information        
+        
         foreach (CardRank r in peekedCards.Select(str => CardUtils.StringToRank(str)))
         {
             if (!aiKnowledge[monkeyIndex].ContainsKey(r))
@@ -183,19 +235,12 @@ public class BSAIController : MonoBehaviour
             }
 
             int previousRankKnowledge = aiKnowledge[monkeyIndex][r];
-            // the number of cards of rank r this monkey holds
             int cardsHeldOfRank = BSGameLogic.instance.GetMonkeyHand(monkeyIndex).Where(c => c.rank == r).Count();
             int remainingCardsPlayerCanHold = 4 - cardsHeldOfRank - previousRankKnowledge;
 
-            // the ai already thinks that the player and themselves hold 4 cards, meaning we shouldn't do anything
-            // as we are necessarily seeing a card that we already know about
             if (remainingCardsPlayerCanHold <= 0) continue;
-
-            // we randomly decide whether or not to add another card based on the chance that we're seeing a card we already know about
-            // the chance being 1 / previousRankKnowledge + 1 so 100% chance if we didn't know that they had this rank, 50% if they already have 1, etc etc
-            if (Random.value < (1 / (previousRankKnowledge + 1f))) aiKnowledge[monkeyIndex][r] = Mathf.Min(4, aiKnowledge[monkeyIndex][r] + 1);
+            if (Random.value < (1 / (previousRankKnowledge + 1f))) 
+                aiKnowledge[monkeyIndex][r] = Mathf.Min(4, aiKnowledge[monkeyIndex][r] + 1);
         }
-        
-        Debug.Log($"Monkey {monkeyIndex} peeked at human. Saw: {string.Join(", ", peekedCards)}");
     }
 }
